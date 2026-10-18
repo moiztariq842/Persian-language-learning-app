@@ -4,6 +4,9 @@ REM Build Script for Persian Language Learning App
 REM Compiles pure Java source files to bin\
 REM ========================================================
 
+echo Cleaning bin directory...
+if exist bin rd /s /q bin
+mkdir bin
 
 echo Finding source files...
 if exist sources.txt del sources.txt
