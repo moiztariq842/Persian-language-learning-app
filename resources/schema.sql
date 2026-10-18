@@ -1,0 +1,2 @@
+-- Database schema initialization
+-- Resources folder for sql schemas and assets

@@ -1,0 +1,18 @@
+# Documentation folder (as requested)
+documentation/
+
+# Build artifacts & runtime database
+bin/
+*.class
+*.db
+*.db-journal
+persian_app.db
+
+# IDE & Editor settings
+.idea/
+*.iml
+.vscode/
+.eclipse/
+.settings/
+.DS_Store
+Thumbs.db
