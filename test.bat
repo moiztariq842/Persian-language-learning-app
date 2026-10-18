@@ -4,13 +4,24 @@ REM Test Script for Persian Language Learning App
 REM Compiles tests and runs JUnit 5 Console Standalone Runner
 REM ========================================================
 
-echo Compiling test files...
-javac -encoding UTF-8 -cp "bin;lib\*" -d bin test\com\persianapp\domain\*.java test\com\persianapp\application\stubs\*.java test\com\persianapp\application\*.java test\com\persianapp\infrastructure\*.java
+echo Finding test source files...
+if exist test_sources.txt del test_sources.txt
+powershell -NoProfile -Command "if (Test-Path test) { (Get-ChildItem -Recurse -Filter *.java test | Resolve-Path -Relative) -replace '\\', '/' | Out-File -Encoding ASCII test_sources.txt }"
 
-if %ERRORLEVEL% NEQ 0 (
+if not exist test_sources.txt (
+    echo [INFO] No test files to compile.
+    exit /b 0
+)
+
+echo Compiling test files...
+javac -encoding UTF-8 -cp "bin;lib\*" -d bin @test_sources.txt
+set TEST_COMPILE_STATUS=%ERRORLEVEL%
+if exist test_sources.txt del test_sources.txt
+
+if %TEST_COMPILE_STATUS% NEQ 0 (
     echo [ERROR] Test compilation failed!
-    exit /b %ERRORLEVEL%
+    exit /b %TEST_COMPILE_STATUS%
 )
 
 echo Running JUnit 5 tests...
-java -jar lib\junit-platform-console-standalone-1.10.2.jar --class-path bin --scan-class-path
+java -jar lib\junit-platform-console-standalone-1.10.2.jar --class-path "bin;lib\sqlite-jdbc-3.45.2.0.jar" --scan-class-path
