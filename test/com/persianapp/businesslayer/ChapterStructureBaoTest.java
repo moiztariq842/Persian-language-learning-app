@@ -18,20 +18,20 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @DisplayName("UC-02: ChapterStructureService")
-class ChapterStructureServiceTest {
+class ChapterStructureBaoTest {
 
     private static final String CHAPTER = "ch-1";
     private static final String OTHER_CHAPTER = "ch-2";
 
-    private StubStructureRepository repository;
+    private StubStructureDao repository;
     private StubChapterLookup lookup;
-    private ChapterStructureService service;
+    private ChapterStructureBao service;
 
     @BeforeEach
     void setUp() {
-        repository = new StubStructureRepository();
+        repository = new StubStructureDao();
         lookup = new StubChapterLookup(CHAPTER, OTHER_CHAPTER);
-        service = new ChapterStructureService(repository, lookup);
+        service = new ChapterStructureBao(repository, lookup);
     }
 
     @Test
@@ -122,13 +122,13 @@ class ChapterStructureServiceTest {
     @Test
     @DisplayName("Requires both collaborators")
     void requiresCollaborators() {
-        assertThrows(IllegalArgumentException.class, () -> new ChapterStructureService(null, lookup));
-        assertThrows(IllegalArgumentException.class, () -> new ChapterStructureService(repository, null));
+        assertThrows(IllegalArgumentException.class, () -> new ChapterStructureBao(null, lookup));
+        assertThrows(IllegalArgumentException.class, () -> new ChapterStructureBao(repository, null));
     }
 
     // ---- hand-written stubs (no mocking framework) ----
 
-    private static class StubStructureRepository implements StructureRepository {
+    private static class StubStructureDao implements StructureDao {
         private final Map<String, ChapterStructure> stored = new HashMap<>();
         int saveCount = 0;
 

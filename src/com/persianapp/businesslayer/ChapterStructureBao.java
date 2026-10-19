@@ -8,12 +8,12 @@ import java.util.List;
  * Use-case logic for UC-02: configure the structure of a chapter.
  * Dependencies are injected through the constructor.
  */
-public class ChapterStructureService {
+public class ChapterStructureBao {
 
-    private final StructureRepository repository;
+    private final StructureDao repository;
     private final ChapterLookup chapterLookup;
 
-    public ChapterStructureService(StructureRepository repository, ChapterLookup chapterLookup) {
+    public ChapterStructureBao(StructureDao repository, ChapterLookup chapterLookup) {
         if (repository == null || chapterLookup == null) {
             throw new IllegalArgumentException("Repository and chapter lookup are required.");
         }

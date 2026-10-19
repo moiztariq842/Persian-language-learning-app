@@ -6,7 +6,7 @@ import java.util.Optional;
  * Storage contract for chapter structures (UC-02).
  * Implemented in the data access layer; the business layer depends only on this interface.
  */
-public interface StructureRepository {
+public interface StructureDao {
 
     /**
      * Returns the saved structure of the given chapter,

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.persianapp.businesslayer.ChapterStructureService;
+import com.persianapp.businesslayer.ChapterStructureBao;
 import com.persianapp.businesslayer.ComponentType;
 
 /**
@@ -13,9 +13,9 @@ import com.persianapp.businesslayer.ComponentType;
  */
 public class StructureController {
 
-    private final ChapterStructureService service;
+    private final ChapterStructureBao service;
 
-    public StructureController(ChapterStructureService service) {
+    public StructureController(ChapterStructureBao service) {
         if (service == null) {
             throw new IllegalArgumentException("Service is required.");
         }
