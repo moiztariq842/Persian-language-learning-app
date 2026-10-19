@@ -16,8 +16,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-@DisplayName("UC-02: ChapterStructureService")
+@DisplayName("UC-02: ChapterStructureBao")
 class ChapterStructureBaoTest {
 
     private static final String CHAPTER = "ch-1";
