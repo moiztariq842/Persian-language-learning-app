@@ -34,6 +34,7 @@ public class StructurePanel extends JPanel {
     private static final Font UI_FONT = new Font("Segoe UI", Font.PLAIN, 16);
     private static final Color SUCCESS_COLOR = new Color(0, 128, 0);
     private static final Color ERROR_COLOR = new Color(176, 0, 32);
+    private static final Color INFO_COLOR = new Color(180, 90, 0);
 
     private final StructureController controller;
     private final DefaultListModel<ComponentType> availableModel = new DefaultListModel<>();
@@ -148,13 +149,28 @@ public class StructurePanel extends JPanel {
     }
 
     private void move(boolean up) {
+        if (selectedModel.size() < 2) {
+            setStatus("ترتیب بدلنے کے لیے کم از کم دو حصے ہونے چاہئیں", INFO_COLOR);
+            return;
+        }
         ComponentType type = selectedList.getSelectedValue();
         if (type == null) {
+            setStatus("پہلے منتخب حصوں میں سے ایک حصہ چنیں", INFO_COLOR);
+            return;
+        }
+        int index = selectedModel.indexOf(type);
+        if (up && index == 0) {
+            setStatus("یہ حصہ پہلے ہی سب سے اوپر ہے", INFO_COLOR);
+            return;
+        }
+        if (!up && index == selectedModel.size() - 1) {
+            setStatus("یہ حصہ پہلے ہی سب سے نیچے ہے", INFO_COLOR);
             return;
         }
         List<ComponentType> current = currentSelection();
         showSelection(up ? controller.moveUp(current, type) : controller.moveDown(current, type));
         selectedList.setSelectedValue(type, true);
+        setStatus(" ", Color.DARK_GRAY);
     }
 
     private void save() {
