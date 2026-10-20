@@ -20,10 +20,11 @@ class StructureMessagesTest {
     }
 
     @Test
-    @DisplayName("The success and fallback messages are Urdu")
-    void successAndFallbackAreUrdu() {
+    @DisplayName("The success, fallback and storage-failure messages are Urdu")
+    void successFallbackAndStorageFailureAreUrdu() {
         assertIsUrdu(StructureMessages.SAVED);
         assertIsUrdu(StructureMessages.UNEXPECTED);
+        assertIsUrdu(StructureMessages.STORAGE_FAILED);
     }
 
     private static void assertIsUrdu(String text) {
