@@ -23,6 +23,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 
 import com.persianapp.businesslayer.ComponentType;
+import com.persianapp.businesslayer.StructureException;
 
 /**
  * Right-to-left Swing screen for UC-02 (configure chapter structure).
@@ -30,6 +31,8 @@ import com.persianapp.businesslayer.ComponentType;
  * It is a plain JPanel so it can be placed in any window the group builds.
  */
 public class StructurePanel extends JPanel {
+
+    private static final long serialVersionUID = 1L;
 
     private static final Font UI_FONT = new Font("Segoe UI", Font.PLAIN, 16);
     private static final Color SUCCESS_COLOR = new Color(0, 128, 0);
@@ -59,10 +62,10 @@ public class StructurePanel extends JPanel {
         try {
             showSelection(controller.loadSelected(chapterId));
             setStatus(" ", Color.DARK_GRAY);
-        } catch (IllegalArgumentException e) {
+        } catch (StructureException e) {
             this.chapterId = null;
             showSelection(Collections.<ComponentType>emptyList());
-            setStatus(e.getMessage(), ERROR_COLOR);
+            setStatus(StructureMessages.forCode(e.getCode()), ERROR_COLOR);
         }
     }
 
@@ -102,6 +105,8 @@ public class StructurePanel extends JPanel {
         list.setFont(UI_FONT);
         list.setSelectionMode(selectionMode);
         list.setCellRenderer(new DefaultListCellRenderer() {
+            private static final long serialVersionUID = 1L;
+
             @Override
             public Component getListCellRendererComponent(JList<?> source, Object value,
                     int index, boolean isSelected, boolean cellHasFocus) {
@@ -131,21 +136,25 @@ public class StructurePanel extends JPanel {
     private void addSelected() {
         List<ComponentType> chosen = availableList.getSelectedValuesList();
         if (chosen.isEmpty()) {
+            setStatus("پہلے دستیاب حصوں میں سے کوئی حصہ چنیں", INFO_COLOR);
             return;
         }
         List<ComponentType> updated = currentSelection();
         updated.addAll(chosen);
         showSelection(updated);
+        setStatus(" ", Color.DARK_GRAY);
     }
 
     private void removeSelected() {
         List<ComponentType> chosen = selectedList.getSelectedValuesList();
         if (chosen.isEmpty()) {
+            setStatus("پہلے منتخب حصوں میں سے کوئی حصہ چنیں", INFO_COLOR);
             return;
         }
         List<ComponentType> updated = currentSelection();
         updated.removeAll(chosen);
         showSelection(updated);
+        setStatus(" ", Color.DARK_GRAY);
     }
 
     private void move(boolean up) {
