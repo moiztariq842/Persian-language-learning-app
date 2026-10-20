@@ -23,6 +23,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 
 import com.persianapp.businesslayer.ComponentType;
+import com.persianapp.businesslayer.DataAccessException;
 import com.persianapp.businesslayer.StructureException;
 
 /**
@@ -66,6 +67,10 @@ public class StructurePanel extends JPanel {
             this.chapterId = null;
             showSelection(Collections.<ComponentType>emptyList());
             setStatus(StructureMessages.forCode(e.getCode()), ERROR_COLOR);
+        } catch (DataAccessException e) {
+            this.chapterId = null;
+            showSelection(Collections.<ComponentType>emptyList());
+            setStatus(StructureMessages.STORAGE_FAILED, ERROR_COLOR);
         }
     }
 
