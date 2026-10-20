@@ -23,6 +23,7 @@ import com.persianapp.businesslayer.ChapterStructure;
 import com.persianapp.businesslayer.ChapterStructureBao;
 import com.persianapp.businesslayer.ComponentType;
 import com.persianapp.businesslayer.StructureDao;
+import com.persianapp.businesslayer.StructureErrorCode;
 
 @DisplayName("UC-02: StructureController")
 class StructureControllerTest {
@@ -141,6 +142,20 @@ class StructureControllerTest {
     @DisplayName("Requires a business object")
     void requiresBao() {
         assertThrows(IllegalArgumentException.class, () -> new StructureController(null));
+    }
+
+    @Test
+    @DisplayName("Reports the Urdu message that matches the error code")
+    void reportsUrduMessageForErrorCode() {
+        ActionResult result = controller.save(CHAPTER, Collections.<ComponentType>emptyList());
+        assertEquals(StructureMessages.forCode(StructureErrorCode.EMPTY_SELECTION), result.getMessage());
+    }
+
+    @Test
+    @DisplayName("Reports the Urdu success message after saving")
+    void reportsUrduSuccessMessage() {
+        ActionResult result = controller.save(CHAPTER, Arrays.asList(ComponentType.EXAMPLES));
+        assertEquals(StructureMessages.SAVED, result.getMessage());
     }
 
     // ---- hand-written stubs (no mocking framework) ----

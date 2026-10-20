@@ -6,42 +6,45 @@ import java.util.List;
 
 import com.persianapp.businesslayer.ChapterStructureBao;
 import com.persianapp.businesslayer.ComponentType;
+import com.persianapp.businesslayer.StructureException;
 
 /**
  * Presentation-layer controller for UC-02 (configure chapter structure).
- * Receives the administrator's actions from the screen and delegates to the service.
+ * Receives the administrator's actions from the screen and delegates to the business object.
  */
 public class StructureController {
 
-    private final ChapterStructureBao service;
+    private final ChapterStructureBao bao;
 
-    public StructureController(ChapterStructureBao service) {
-        if (service == null) {
-            throw new IllegalArgumentException("Service is required.");
+    public StructureController(ChapterStructureBao bao) {
+        if (bao == null) {
+            throw new IllegalArgumentException("Business object is required.");
         }
-        this.service = service;
+        this.bao = bao;
     }
 
     /** All components the administrator can choose from. */
     public List<ComponentType> getAvailableComponents() {
-        return service.getSupportedComponents();
+        return bao.getSupportedComponents();
     }
 
     /**
      * The components currently saved for a chapter, in order.
-     * The screen picks the chapter from an existing list, so an unknown id is a programming error.
+     * Throws StructureException if the chapter is unknown; the screen shows its Urdu message.
      */
     public List<ComponentType> loadSelected(String chapterId) {
-        return service.getStructure(chapterId).getComponents();
+        return bao.getStructure(chapterId).getComponents();
     }
 
-    /** Validates and saves; the result carries a message to show the administrator. */
+    /** Validates and saves; the result carries an Urdu message to show the administrator. */
     public ActionResult save(String chapterId, List<ComponentType> selected) {
         try {
-            service.saveStructure(chapterId, selected);
-            return ActionResult.ok("Chapter structure saved.");
+            bao.saveStructure(chapterId, selected);
+            return ActionResult.ok(StructureMessages.SAVED);
+        } catch (StructureException e) {
+            return ActionResult.error(StructureMessages.forCode(e.getCode()));
         } catch (IllegalArgumentException e) {
-            return ActionResult.error(e.getMessage());
+            return ActionResult.error(StructureMessages.UNEXPECTED);
         }
     }
 
