@@ -42,18 +42,6 @@ public class DatabaseManager {
                 );
             """);
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_chapters_created_at ON chapters(created_at ASC);");
-
-            // UC-04: Glossary Management table
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS glossary_entries (
-                    id           TEXT PRIMARY KEY,
-                    chapter_id   TEXT NOT NULL,
-                    persian_word TEXT NOT NULL CHECK(length(trim(persian_word)) > 0),
-                    urdu_meaning TEXT NOT NULL CHECK(length(trim(urdu_meaning)) > 0),
-                    FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE
-                );
-            """);
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_glossary_chapter_id ON glossary_entries(chapter_id);");
         }
     }
 
