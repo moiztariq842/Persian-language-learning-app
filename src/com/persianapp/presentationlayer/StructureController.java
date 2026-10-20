@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.persianapp.businesslayer.ChapterStructureBao;
 import com.persianapp.businesslayer.ComponentType;
+import com.persianapp.businesslayer.DataAccessException;
 import com.persianapp.businesslayer.StructureException;
 
 /**
@@ -30,7 +31,8 @@ public class StructureController {
 
     /**
      * The components currently saved for a chapter, in order.
-     * Throws StructureException if the chapter is unknown; the screen shows its Urdu message.
+     * Throws StructureException if the chapter is unknown and DataAccessException if the
+     * storage fails; the screen shows an Urdu message for each.
      */
     public List<ComponentType> loadSelected(String chapterId) {
         return bao.getStructure(chapterId).getComponents();
@@ -43,6 +45,8 @@ public class StructureController {
             return ActionResult.ok(StructureMessages.SAVED);
         } catch (StructureException e) {
             return ActionResult.error(StructureMessages.forCode(e.getCode()));
+        } catch (DataAccessException e) {
+            return ActionResult.error(StructureMessages.STORAGE_FAILED);
         } catch (IllegalArgumentException e) {
             return ActionResult.error(StructureMessages.UNEXPECTED);
         }

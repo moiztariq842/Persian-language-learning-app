@@ -22,6 +22,7 @@ import com.persianapp.businesslayer.ChapterLookup;
 import com.persianapp.businesslayer.ChapterStructure;
 import com.persianapp.businesslayer.ChapterStructureBao;
 import com.persianapp.businesslayer.ComponentType;
+import com.persianapp.businesslayer.DataAccessException;
 import com.persianapp.businesslayer.StructureDao;
 import com.persianapp.businesslayer.StructureErrorCode;
 
@@ -158,6 +159,27 @@ class StructureControllerTest {
         assertEquals(StructureMessages.SAVED, result.getMessage());
     }
 
+    @Test
+    @DisplayName("Reports a storage failure while saving as an Urdu error instead of throwing")
+    void reportsStorageFailureOnSave() {
+        StructureController failing = new StructureController(
+                new ChapterStructureBao(new FailingStructureDao(), new StubChapterLookup(CHAPTER)));
+
+        ActionResult result = failing.save(CHAPTER, Arrays.asList(ComponentType.EXAMPLES));
+
+        assertFalse(result.isSuccess());
+        assertEquals(StructureMessages.STORAGE_FAILED, result.getMessage());
+    }
+
+    @Test
+    @DisplayName("Loading lets a storage failure reach the screen")
+    void loadPassesStorageFailureOn() {
+        StructureController failing = new StructureController(
+                new ChapterStructureBao(new FailingStructureDao(), new StubChapterLookup(CHAPTER)));
+
+        assertThrows(DataAccessException.class, () -> failing.loadSelected(CHAPTER));
+    }
+
     // ---- hand-written stubs (no mocking framework) ----
 
     private static class StubStructureDao implements StructureDao {
@@ -173,6 +195,18 @@ class StructureControllerTest {
         public void save(ChapterStructure structure) {
             saveCount++;
             stored.put(structure.getChapterId(), structure);
+        }
+    }
+
+    private static class FailingStructureDao implements StructureDao {
+        @Override
+        public Optional<ChapterStructure> findByChapterId(String chapterId) {
+            throw new DataAccessException("database down", new RuntimeException("down"));
+        }
+
+        @Override
+        public void save(ChapterStructure structure) {
+            throw new DataAccessException("database down", new RuntimeException("down"));
         }
     }
 

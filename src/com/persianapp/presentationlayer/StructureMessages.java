@@ -7,6 +7,7 @@ public final class StructureMessages {
 
     public static final String SAVED = "باب کی ساخت محفوظ ہو گئی";
     public static final String UNEXPECTED = "درخواست مکمل نہیں ہو سکی";
+    public static final String STORAGE_FAILED = "ڈیٹا بیس سے رابطہ نہیں ہو سکا، دوبارہ کوشش کریں";
 
     private StructureMessages() {
     }
