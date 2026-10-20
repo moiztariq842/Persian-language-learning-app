@@ -5,19 +5,19 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Use-case logic for UC-02: configure the structure of a chapter.
+ * Business logic for UC-02: configure the structure of a chapter.
  * Dependencies are injected through the constructor.
  */
 public class ChapterStructureBao {
 
-    private final StructureDao repository;
+    private final StructureDao dao;
     private final ChapterLookup chapterLookup;
 
-    public ChapterStructureBao(StructureDao repository, ChapterLookup chapterLookup) {
-        if (repository == null || chapterLookup == null) {
-            throw new IllegalArgumentException("Repository and chapter lookup are required.");
+    public ChapterStructureBao(StructureDao dao, ChapterLookup chapterLookup) {
+        if (dao == null || chapterLookup == null) {
+            throw new IllegalArgumentException("Dao and chapter lookup are required.");
         }
-        this.repository = repository;
+        this.dao = dao;
         this.chapterLookup = chapterLookup;
     }
 
@@ -29,7 +29,7 @@ public class ChapterStructureBao {
     /** The saved structure of a chapter, or an empty one if none is saved yet. */
     public ChapterStructure getStructure(String chapterId) {
         requireExistingChapter(chapterId);
-        return repository.findByChapterId(chapterId)
+        return dao.findByChapterId(chapterId)
                 .orElse(ChapterStructure.empty(chapterId));
     }
 
@@ -42,18 +42,21 @@ public class ChapterStructureBao {
         requireExistingChapter(chapterId);
         ChapterStructure structure = new ChapterStructure(chapterId, components);
         if (structure.isEmpty()) {
-            throw new IllegalArgumentException("Select at least one component for the chapter.");
+            throw new StructureException(StructureErrorCode.EMPTY_SELECTION,
+                    "Select at least one component for the chapter.");
         }
-        repository.save(structure);
+        dao.save(structure);
         return structure;
     }
 
     private void requireExistingChapter(String chapterId) {
         if (chapterId == null || chapterId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Chapter id must not be blank.");
+            throw new StructureException(StructureErrorCode.BLANK_CHAPTER_ID,
+                    "Chapter id must not be blank.");
         }
         if (!chapterLookup.exists(chapterId)) {
-            throw new IllegalArgumentException("Chapter " + chapterId + " does not exist.");
+            throw new StructureException(StructureErrorCode.CHAPTER_NOT_FOUND,
+                    "Chapter " + chapterId + " does not exist.");
         }
     }
 }
