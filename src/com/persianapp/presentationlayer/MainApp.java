@@ -1,38 +1,39 @@
 package com.persianapp.presentationlayer;
 
-import com.persianapp.businesslayer.ChapterService;
-import com.persianapp.dataaccesslayer.ChapterRepository;
-import com.persianapp.dataaccesslayer.MySQLChapterRepository;
+import com.persianapp.businesslayer.ChapterBao;
+import com.persianapp.dataaccesslayer.ConnectionProvider;
+import com.persianapp.dataaccesslayer.DatabaseManager;
+import com.persianapp.dataaccesslayer.SqlChapterDao;
 
 import javax.swing.*;
 import java.awt.*;
 
+// Desktop application entry point.
 public class MainApp extends JFrame {
 
-    // Launches the UC-01 Chapter Management desktop application.
+    // Launches the application window.
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception ignored) {}
 
-            ChapterRepository repository = new MySQLChapterRepository();
-            ChapterService service       = new ChapterService(repository);
-            ChapterController controller = new ChapterController(service);
+            ConnectionProvider connections = DatabaseManager::getConnection;
+            SqlChapterDao      dao         = new SqlChapterDao(connections);
+            ChapterBao         bao         = new ChapterBao(dao);
+            ChapterController  controller  = new ChapterController(bao);
 
             new MainApp(controller).setVisible(true);
         });
     }
 
-    // Constructs the UC-01 Chapter application window.
+    // Creates the main application frame.
     public MainApp(ChapterController controller) {
         super("Persian Language Learning App — آموختن زبان فارسی (UC-01)");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(780, 520);
         setMinimumSize(new Dimension(650, 400));
         setLocationRelativeTo(null);
-
-        ChapterPanel panel = new ChapterPanel(controller);
-        setContentPane(panel);
+        setContentPane(new ChapterPanel(controller));
     }
 }

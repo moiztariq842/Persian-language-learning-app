@@ -4,6 +4,13 @@ REM Test Script for Persian Language Learning App
 REM Compiles tests and runs JUnit 5 Console Standalone Runner
 REM ========================================================
 
+call build.bat
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] Build failed before tests!
+    exit /b %ERRORLEVEL%
+)
+
+
 echo Finding test source files...
 if exist test_sources.txt del test_sources.txt
 powershell -NoProfile -Command "if (Test-Path test) { (Get-ChildItem -Recurse -Filter *.java test | Resolve-Path -Relative) -replace '\\', '/' | Out-File -Encoding ASCII test_sources.txt }"

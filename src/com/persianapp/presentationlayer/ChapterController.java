@@ -1,43 +1,83 @@
 package com.persianapp.presentationlayer;
 
 import com.persianapp.businesslayer.Chapter;
-import com.persianapp.businesslayer.ChapterService;
+import com.persianapp.businesslayer.ChapterBao;
+import com.persianapp.businesslayer.ChapterException;
+import com.persianapp.businesslayer.DataAccessException;
 import java.util.List;
 
+// Facade controller mediating between UI and business layer.
 public class ChapterController {
 
-    private final ChapterService chapterService;
+    private final ChapterBao bao;
 
-    // Initializes the controller with the chapter service.
-    public ChapterController(ChapterService chapterService) {
-        if (chapterService == null) {
-            throw new IllegalArgumentException("ChapterService must not be null.");
+    // Initializes the controller with the chapter BAO.
+    public ChapterController(ChapterBao bao) {
+        if (bao == null) {
+            throw new IllegalArgumentException("ChapterBao is required.");
         }
-        this.chapterService = chapterService;
+        this.bao = bao;
     }
 
-    // Creates a new chapter with the given title.
-    public Chapter createChapter(String title) {
-        return chapterService.createChapter(title);
-    }
-
-    // Renames an existing chapter by ID.
-    public Chapter renameChapter(String chapterId, String newTitle) {
-        return chapterService.renameChapter(chapterId, newTitle);
-    }
-
-    // Deletes a chapter by its ID.
-    public void deleteChapter(String chapterId) {
-        chapterService.deleteChapter(chapterId);
-    }
-
-    // Returns the list of all chapters ordered by creation.
+    // Returns all chapters for UI display.
     public List<Chapter> listChapters() {
-        return chapterService.listChapters();
+        return bao.getAllChapters();
     }
 
-    // Retrieves a chapter by its ID.
-    public Chapter getChapter(String chapterId) {
-        return chapterService.openChapter(chapterId);
+    // Creates a new chapter and returns an action result.
+    public ActionResult createChapter(String title) {
+        try {
+            bao.createChapter(title);
+            return ActionResult.ok(ChapterMessages.CREATED);
+        } catch (ChapterException e) {
+            return ActionResult.error(ChapterMessages.forCode(e.getCode()));
+        } catch (DataAccessException e) {
+            return ActionResult.error(ChapterMessages.STORAGE_FAILED);
+        } catch (Exception e) {
+            return ActionResult.error(ChapterMessages.UNEXPECTED);
+        }
+    }
+
+    // Renames an existing chapter and returns an action result.
+    public ActionResult renameChapter(String chapterId, String newTitle) {
+        try {
+            bao.renameChapter(chapterId, newTitle);
+            return ActionResult.ok(ChapterMessages.RENAMED);
+        } catch (ChapterException e) {
+            return ActionResult.error(ChapterMessages.forCode(e.getCode()));
+        } catch (DataAccessException e) {
+            return ActionResult.error(ChapterMessages.STORAGE_FAILED);
+        } catch (Exception e) {
+            return ActionResult.error(ChapterMessages.UNEXPECTED);
+        }
+    }
+
+    // Deletes a chapter and returns an action result.
+    public ActionResult deleteChapter(String chapterId) {
+        try {
+            bao.deleteChapter(chapterId);
+            return ActionResult.ok(ChapterMessages.DELETED);
+        } catch (ChapterException e) {
+            return ActionResult.error(ChapterMessages.forCode(e.getCode()));
+        } catch (DataAccessException e) {
+            return ActionResult.error(ChapterMessages.STORAGE_FAILED);
+        } catch (Exception e) {
+            return ActionResult.error(ChapterMessages.UNEXPECTED);
+        }
+    }
+
+    // Returns a chapter title.
+    public String getChapterTitle(String chapterId) {
+        return bao.findChapter(chapterId).getTitle();
+    }
+
+    // Checks if a chapter exists.
+    public boolean chapterExists(String chapterId) {
+        try {
+            bao.findChapter(chapterId);
+            return true;
+        } catch (ChapterException e) {
+            return false;
+        }
     }
 }

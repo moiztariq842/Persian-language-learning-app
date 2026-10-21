@@ -8,6 +8,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.Consumer;
 
+// Presentation panel for chapter management.
 public class ChapterPanel extends JPanel {
 
     private static final Font TITLE_FONT = new Font("Segoe UI", Font.BOLD, 18);
@@ -20,27 +21,27 @@ public class ChapterPanel extends JPanel {
     private final JLabel statusLabel = new JLabel("تیار — Ready");
     private Consumer<Chapter> selectionListener;
 
-    // Constructs the UC-01 chapter management panel.
+    // Constructs the chapter panel.
     public ChapterPanel(ChapterController controller) {
         if (controller == null) {
-            throw new IllegalArgumentException("ChapterController must not be null.");
+            throw new IllegalArgumentException("ChapterController is required.");
         }
         this.controller = controller;
         buildLayout();
         refreshList();
     }
 
-    // Sets a callback listener when a chapter is selected in the list.
+    // Sets callback for chapter selection.
     public void setOnChapterSelectedListener(Consumer<Chapter> listener) {
         this.selectionListener = listener;
     }
 
-    // Returns the currently selected chapter if any.
+    // Returns the currently selected chapter.
     public Chapter getSelectedChapter() {
         return chapterList.getSelectedValue();
     }
 
-    // Refreshes the list of chapters from the database.
+    // Reloads all chapters into the list.
     public void refreshList() {
         listModel.clear();
         List<Chapter> chapters = controller.listChapters();
@@ -50,19 +51,15 @@ public class ChapterPanel extends JPanel {
         statusLabel.setText("کل ابواب: " + chapters.size() + " | Total Chapters: " + chapters.size());
     }
 
-    // Builds the visual UI layout and controls.
+    // Sets up UI components and layouts.
     private void buildLayout() {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(14, 16, 14, 16));
 
-        // Top Header
-        JPanel headerPanel = new JPanel(new BorderLayout());
         JLabel titleLabel = new JLabel("ابواب کا انتظام — Chapter Management (UC-01)");
         titleLabel.setFont(TITLE_FONT);
         titleLabel.setForeground(new Color(24, 43, 73));
-        headerPanel.add(titleLabel, BorderLayout.WEST);
 
-        // Center List View
         chapterList.setFont(RTL_FONT);
         chapterList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         chapterList.setFixedCellHeight(36);
@@ -86,138 +83,129 @@ public class ChapterPanel extends JPanel {
         });
 
         JScrollPane scrollPane = new JScrollPane(chapterList);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("موجودہ ابواب کی فہرست — Saved Chapters (Oldest First)"));
+        scrollPane.setBorder(BorderFactory.createTitledBorder(
+            "موجودہ ابواب کی فہرست — Saved Chapters (Oldest First)"));
 
-        // Action Buttons Toolbar
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
 
-        JButton newBtn = new JButton("نیا باب — New Chapter (FR-CH-01)");
-        newBtn.setFont(UI_FONT);
-        newBtn.addActionListener(e -> handleCreate());
-
-        JButton renameBtn = new JButton("نام تبدیل کریں — Rename (FR-CH-05)");
-        renameBtn.setFont(UI_FONT);
-        renameBtn.addActionListener(e -> handleRename());
-
-        JButton deleteBtn = new JButton("حذف کریں — Delete (FR-CH-06)");
-        deleteBtn.setFont(UI_FONT);
-        deleteBtn.addActionListener(e -> handleDelete());
-
-        JButton refreshBtn = new JButton("تازہ کریں — Refresh");
-        refreshBtn.setFont(UI_FONT);
-        refreshBtn.addActionListener(e -> refreshList());
+        JButton newBtn    = buildButton("نیا باب — New Chapter", e -> handleCreate());
+        JButton renameBtn = buildButton("نام تبدیل کریں — Rename",  e -> handleRename());
+        JButton deleteBtn = buildButton("حذف کریں — Delete",      e -> handleDelete());
+        JButton refreshBtn = buildButton("تازہ کریں — Refresh",   e -> refreshList());
 
         btnPanel.add(newBtn);
         btnPanel.add(renameBtn);
         btnPanel.add(deleteBtn);
         btnPanel.add(refreshBtn);
 
-        // Status bar
-        JPanel southPanel = new JPanel(new BorderLayout());
         statusLabel.setFont(UI_FONT);
         statusLabel.setForeground(Color.DARK_GRAY);
+
+        JPanel southPanel = new JPanel(new BorderLayout());
         southPanel.add(btnPanel, BorderLayout.NORTH);
         southPanel.add(statusLabel, BorderLayout.SOUTH);
 
-        add(headerPanel, BorderLayout.NORTH);
+        add(titleLabel, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(southPanel, BorderLayout.SOUTH);
     }
 
-    // Handles chapter creation with modal validation dialog.
+    // Opens creation dialog and triggers chapter creation.
     private void handleCreate() {
         JTextField inputField = new JTextField(25);
         inputField.setFont(RTL_FONT);
         inputField.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
 
-        JPanel dialogPanel = new JPanel(new BorderLayout(5, 5));
-        JLabel label = new JLabel("باب کا عنوان درج کریں — Enter Chapter Title:");
+        JPanel dialog = new JPanel(new BorderLayout(5, 5));
+        JLabel label  = new JLabel("باب کا عنوان درج کریں — Enter Chapter Title:");
         label.setFont(UI_FONT);
-        dialogPanel.add(label, BorderLayout.NORTH);
-        dialogPanel.add(inputField, BorderLayout.CENTER);
+        dialog.add(label, BorderLayout.NORTH);
+        dialog.add(inputField, BorderLayout.CENTER);
 
-        int result = JOptionPane.showConfirmDialog(
-            this, dialogPanel, "نیا باب بنائیں — Create Chapter",
+        int confirm = JOptionPane.showConfirmDialog(this, dialog,
+            "نیا باب بنائیں — Create Chapter",
             JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
-        if (result == JOptionPane.OK_OPTION) {
-            String title = inputField.getText();
-            try {
-                controller.createChapter(title);
-                refreshList();
-                statusLabel.setText("باب کامیابی سے بن گیا — Chapter created successfully.");
-            } catch (IllegalArgumentException ex) {
-                showError(ex.getMessage());
-            }
-        }
+        if (confirm != JOptionPane.OK_OPTION) return;
+
+        ActionResult result = controller.createChapter(inputField.getText());
+        applyResult(result);
     }
 
-    // Handles chapter renaming with pre-filled title.
+    // Opens rename dialog and triggers chapter renaming.
     private void handleRename() {
         Chapter sel = chapterList.getSelectedValue();
-        if (sel == null) {
-            showWarning("براہ کرم فہرست سے پہلے ایک باب منتخب کریں — Please select a chapter first.");
-            return;
-        }
+        if (sel == null) { showWarning(ChapterMessages.SELECT_FIRST); return; }
 
         JTextField inputField = new JTextField(sel.getTitle(), 25);
         inputField.setFont(RTL_FONT);
         inputField.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
 
-        JPanel dialogPanel = new JPanel(new BorderLayout(5, 5));
-        JLabel label = new JLabel("نیا عنوان درج کریں — Enter New Title:");
+        JPanel dialog = new JPanel(new BorderLayout(5, 5));
+        JLabel label  = new JLabel("نیا عنوان درج کریں — Enter New Title:");
         label.setFont(UI_FONT);
-        dialogPanel.add(label, BorderLayout.NORTH);
-        dialogPanel.add(inputField, BorderLayout.CENTER);
+        dialog.add(label, BorderLayout.NORTH);
+        dialog.add(inputField, BorderLayout.CENTER);
 
-        int result = JOptionPane.showConfirmDialog(
-            this, dialogPanel, "عنوان تبدیل کریں — Rename Chapter",
+        int confirm = JOptionPane.showConfirmDialog(this, dialog,
+            "عنوان تبدیل کریں — Rename Chapter",
             JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
-        if (result == JOptionPane.OK_OPTION) {
-            String newTitle = inputField.getText();
-            try {
-                controller.renameChapter(sel.getId(), newTitle);
-                refreshList();
-                statusLabel.setText("عنوان کامیابی سے اپ ڈیٹ ہو گیا — Chapter renamed successfully.");
-            } catch (IllegalArgumentException ex) {
-                showError(ex.getMessage());
-            }
-        }
+        if (confirm != JOptionPane.OK_OPTION) return;
+
+        ActionResult result = controller.renameChapter(sel.getId(), inputField.getText());
+        applyResult(result);
     }
 
-    // Handles chapter deletion with cascade confirmation dialog (BR-04, BR-05).
+    // Opens confirmation dialog and triggers chapter deletion.
     private void handleDelete() {
         Chapter sel = chapterList.getSelectedValue();
-        if (sel == null) {
-            showWarning("براہ کرم حذف کرنے کے لیے ایک باب منتخب کریں — Please select a chapter first.");
-            return;
-        }
+        if (sel == null) { showWarning(ChapterMessages.SELECT_FIRST); return; }
 
-        String warningMessage = "کیا آپ واقعی یہ باب حذف کرنا چاہتے ہیں؟\n"
-            + "Are you sure you want to delete chapter: '" + sel.getTitle() + "'?\n\n"
-            + "انتباہ (Warning — BR-04, BR-05, FR-CH-07):\n"
-            + "اس باب کو حذف کرنے سے اس کے تمام حصے (components) اور لغت (glossary) بھی مستقل طور پر حذف ہو جائیں گے!\n"
-            + "Deleting this chapter will permanently remove ALL associated components, instructional content, and glossary entries!";
+        Object[] options  = { ChapterMessages.CONFIRM_YES, ChapterMessages.CONFIRM_NO };
+        JLabel   msgLabel = new JLabel(
+            "<html>کیا آپ واقعی باب '<b>" + sel.getTitle() + "</b>' حذف کرنا چاہتے ہیں؟<br><br>"
+            + "<b>انتباہ:</b><br>"
+            + "اس کے تمام حصے اور لغت بھی مستقل طور پر حذف ہو جائیں گے!</html>");
+        msgLabel.setFont(UI_FONT);
 
-        int confirm = JOptionPane.showConfirmDialog(
-            this, warningMessage, "حذف کی تصدیق — Confirm Delete (Cascade)",
-            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        JOptionPane pane = new JOptionPane(msgLabel, JOptionPane.WARNING_MESSAGE,
+            JOptionPane.YES_NO_OPTION, null, options, options[1]);
+        JDialog dlg = pane.createDialog(this, ChapterMessages.CONFIRM_DELETE_TITLE);
+        dlg.applyComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+        dlg.setVisible(true);
+        dlg.dispose();
 
-        if (confirm == JOptionPane.YES_OPTION) {
-            controller.deleteChapter(sel.getId());
+        if (!ChapterMessages.CONFIRM_YES.equals(pane.getValue())) return;
+
+        ActionResult result = controller.deleteChapter(sel.getId());
+        applyResult(result);
+    }
+
+    // Updates UI state according to action result.
+    private void applyResult(ActionResult result) {
+        if (result.isSuccess()) {
             refreshList();
-            statusLabel.setText("باب اور اس کے تمام حصے حذف کر دیے گئے — Chapter deleted.");
+            statusLabel.setForeground(new Color(25, 120, 40));
+        } else {
+            statusLabel.setForeground(Color.RED);
+            JOptionPane.showMessageDialog(this, result.getMessage(),
+                "خرابی — Validation Error", JOptionPane.ERROR_MESSAGE);
         }
+        statusLabel.setText(result.getMessage());
     }
 
-    // Shows validation error dialog (BR-07, NFR-US-06).
-    private void showError(String message) {
-        JOptionPane.showMessageDialog(this, message, "خرابی — Validation Error", JOptionPane.ERROR_MESSAGE);
-    }
-
-    // Shows warning dialog for missing selection.
+    // Displays a warning message dialog.
     private void showWarning(String message) {
-        JOptionPane.showMessageDialog(this, message, "توجہ فرمائیں — Warning", JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(this, message,
+            "توجہ فرمائیں — Warning", JOptionPane.WARNING_MESSAGE);
+    }
+
+    // Helper to instantiate a configured button.
+    private JButton buildButton(String label, java.awt.event.ActionListener action) {
+        JButton btn = new JButton(label);
+        btn.setFont(UI_FONT);
+        btn.addActionListener(action);
+        return btn;
     }
 }
