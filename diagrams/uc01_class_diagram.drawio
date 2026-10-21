@@ -1,0 +1,160 @@
+<mxfile host="app.diagrams.net" modified="2026-10-21T18:30:00.000Z" agent="Antigravity" version="21.0.0" type="device">
+  <diagram id="uc01-class" name="UC-01 Class Diagram">
+    <mxGraphModel dx="1420" dy="860" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="UC-01: Manage Chapters — Class Diagram (3-Tier Architecture)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#1E3A8A;" vertex="1" parent="1">
+          <mxGeometry x="350" y="20" width="700" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- ========================================== -->
+        <!-- PRESENTATION LAYER PACKAGE                 -->
+        <!-- ========================================== -->
+        <mxCell id="pkg_pl" value="Presentation Layer (com.persianapp.presentationlayer)" style="shape=folder;fontStyle=1;tabWidth=280;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;fillColor=#EFF6FF;strokeColor=#3B82F6;strokeWidth=2;verticalAlign=top;spacingTop=4;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="70" width="1320" height="280" as="geometry"/>
+        </mxCell>
+
+        <!-- MainApp -->
+        <mxCell id="c_mainapp" value="MainApp&#xa;(extends JFrame)&#xa;---------------------------------------&#xa;+ main(args: String[]): void&#xa;+ MainApp(controller: ChapterController)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=45;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;" vertex="1" parent="1">
+          <mxGeometry x="70" y="130" width="230" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterPanel -->
+        <mxCell id="c_panel" value="ChapterPanel&#xa;(extends JPanel)&#xa;---------------------------------------&#xa;- controller: ChapterController&#xa;- listModel: DefaultListModel&lt;Chapter&gt;&#xa;- chapterList: JList&lt;Chapter&gt;&#xa;- statusLabel: JLabel&#xa;---------------------------------------&#xa;+ ChapterPanel(controller: ChapterController)&#xa;+ refreshList(): void&#xa;+ getSelectedChapter(): Chapter&#xa;+ setOnChapterSelectedListener(listener): void&#xa;- buildLayout(): void&#xa;- handleCreate(): void&#xa;- handleRename(): void&#xa;- handleDelete(): void" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=45;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;" vertex="1" parent="1">
+          <mxGeometry x="340" y="115" width="270" height="215" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterController -->
+        <mxCell id="c_controller" value="ChapterController&#xa;(Facade Controller)&#xa;---------------------------------------&#xa;- bao: ChapterBao&#xa;---------------------------------------&#xa;+ ChapterController(bao: ChapterBao)&#xa;+ listChapters(): List&lt;Chapter&gt;&#xa;+ createChapter(title: String): ActionResult&#xa;+ renameChapter(id: String, title: String): ActionResult&#xa;+ deleteChapter(id: String): ActionResult&#xa;+ getChapterTitle(id: String): String&#xa;+ chapterExists(id: String): boolean" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=45;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;" vertex="1" parent="1">
+          <mxGeometry x="660" y="115" width="310" height="200" as="geometry"/>
+        </mxCell>
+
+        <!-- ActionResult -->
+        <mxCell id="c_actionresult" value="ActionResult&#xa;---------------------------------------&#xa;- success: boolean&#xa;- message: String&#xa;---------------------------------------&#xa;+ ok(message: String): ActionResult&#xa;+ error(message: String): ActionResult&#xa;+ isSuccess(): boolean&#xa;+ getMessage(): String" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#E0E7FF;strokeColor=#4338CA;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="115" width="200" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterMessages -->
+        <mxCell id="c_messages" value="ChapterMessages&#xa;---------------------------------------&#xa;+ CREATED: String&#xa;+ RENAMED: String&#xa;+ DELETED: String&#xa;+ STORAGE_FAILED: String&#xa;+ forCode(code: ChapterErrorCode): String" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#E0E7FF;strokeColor=#4338CA;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="275" width="240" height="65" as="geometry"/>
+        </mxCell>
+
+        <!-- ========================================== -->
+        <!-- BUSINESS LAYER PACKAGE                     -->
+        <!-- ========================================== -->
+        <mxCell id="pkg_bl" value="Business Access Layer (com.persianapp.businesslayer)" style="shape=folder;fontStyle=1;tabWidth=300;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;fillColor=#FEF3C7;strokeColor=#D97706;strokeWidth=2;verticalAlign=top;spacingTop=4;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="380" width="1320" height="310" as="geometry"/>
+        </mxCell>
+
+        <!-- Chapter Entity -->
+        <mxCell id="c_chapter" value="Chapter&#xa;(Domain Entity)&#xa;---------------------------------------&#xa;- id: String&#xa;- title: String&#xa;---------------------------------------&#xa;+ Chapter(title: String)&#xa;+ Chapter(id: String, title: String)&#xa;+ getId(): String&#xa;+ getTitle(): String&#xa;+ setTitle(title: String): void&#xa;+ toString(): String" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#FEF08A;strokeColor=#CA8A04;" vertex="1" parent="1">
+          <mxGeometry x="70" y="440" width="220" height="180" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterBao -->
+        <mxCell id="c_bao" value="ChapterBao&#xa;(Business Access Object)&#xa;---------------------------------------&#xa;- dao: ChapterDao&#xa;---------------------------------------&#xa;+ ChapterBao(dao: ChapterDao)&#xa;+ createChapter(title: String): Chapter&#xa;+ getAllChapters(): List&lt;Chapter&gt;&#xa;+ findChapter(id: String): Chapter&#xa;+ renameChapter(id: String, title: String): Chapter&#xa;+ deleteChapter(id: String): void&#xa;+ exists(id: String): boolean&#xa;- validateTitle(title: String): void&#xa;- requireExists(id: String): void" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=45;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#FEF08A;strokeColor=#CA8A04;" vertex="1" parent="1">
+          <mxGeometry x="340" y="440" width="310" height="225" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterLookup Interface -->
+        <mxCell id="i_lookup" value="&lt;&lt;interface&gt;&gt;&#xa;ChapterLookup&#xa;---------------------------------------&#xa;+ exists(chapterId: String): boolean" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=45;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#FEF9C3;strokeColor=#CA8A04;" vertex="1" parent="1">
+          <mxGeometry x="700" y="440" width="230" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterException -->
+        <mxCell id="c_exception" value="ChapterException&#xa;---------------------------------------&#xa;- code: ChapterErrorCode&#xa;---------------------------------------&#xa;+ ChapterException(code, msg)&#xa;+ getCode(): ChapterErrorCode" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#FEE2E2;strokeColor=#DC2626;" vertex="1" parent="1">
+          <mxGeometry x="980" y="440" width="220" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterErrorCode -->
+        <mxCell id="c_errorcode" value="&lt;&lt;enumeration&gt;&gt;&#xa;ChapterErrorCode&#xa;---------------------------------------&#xa;BLANK_TITLE&#xa;CHAPTER_NOT_FOUND" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#FEE2E2;strokeColor=#DC2626;" vertex="1" parent="1">
+          <mxGeometry x="980" y="560" width="220" height="85" as="geometry"/>
+        </mxCell>
+
+        <!-- ========================================== -->
+        <!-- DATA ACCESS LAYER PACKAGE                  -->
+        <!-- ========================================== -->
+        <mxCell id="pkg_dal" value="Data Access Layer (com.persianapp.dataaccesslayer)" style="shape=folder;fontStyle=1;tabWidth=280;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=2;verticalAlign=top;spacingTop=4;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="720" width="1320" height="300" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterDao Interface -->
+        <mxCell id="i_dao" value="&lt;&lt;interface&gt;&gt;&#xa;ChapterDao&#xa;---------------------------------------&#xa;+ insert(chapter: Chapter): void&#xa;+ selectAll(): List&lt;Chapter&gt;&#xa;+ selectById(id: String): Optional&lt;Chapter&gt;&#xa;+ updateTitle(chapter: Chapter): void&#xa;+ deleteById(id: String): void" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=45;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#BBF7D0;strokeColor=#16A34A;" vertex="1" parent="1">
+          <mxGeometry x="340" y="780" width="280" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- SqlChapterDao -->
+        <mxCell id="c_sqldao" value="SqlChapterDao&#xa;(JDBC Implementation)&#xa;---------------------------------------&#xa;- connections: ConnectionProvider&#xa;---------------------------------------&#xa;+ SqlChapterDao(connections: ConnectionProvider)&#xa;+ insert(chapter: Chapter): void&#xa;+ selectAll(): List&lt;Chapter&gt;&#xa;+ selectById(id: String): Optional&lt;Chapter&gt;&#xa;+ updateTitle(chapter: Chapter): void&#xa;+ deleteById(id: String): void" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=45;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#86EFAC;strokeColor=#15803D;" vertex="1" parent="1">
+          <mxGeometry x="670" y="780" width="310" height="170" as="geometry"/>
+        </mxCell>
+
+        <!-- ConnectionProvider -->
+        <mxCell id="i_connprov" value="&lt;&lt;functional interface&gt;&gt;&#xa;ConnectionProvider&#xa;---------------------------------------&#xa;+ getConnection(): Connection" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=45;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#BBF7D0;strokeColor=#16A34A;" vertex="1" parent="1">
+          <mxGeometry x="1030" y="780" width="230" height="75" as="geometry"/>
+        </mxCell>
+
+        <!-- DatabaseManager -->
+        <mxCell id="c_dbmanager" value="DatabaseManager&#xa;(MySQL Connection &amp; Schema)&#xa;---------------------------------------&#xa;- databaseUrl: String&#xa;- dbUser: String&#xa;- dbPassword: String&#xa;- connection: Connection&#xa;---------------------------------------&#xa;+ setDatabaseUrl(url: String): void&#xa;+ getConnection(): Connection&#xa;+ closeConnection(): void&#xa;+ reset(): void&#xa;~ initSchema(conn: Connection): void" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=45;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#BBF7D0;strokeColor=#16A34A;" vertex="1" parent="1">
+          <mxGeometry x="70" y="780" width="240" height="200" as="geometry"/>
+        </mxCell>
+
+        <!-- ========================================== -->
+        <!-- RELATIONSHIPS & EDGES                      -->
+        <!-- ========================================== -->
+        <!-- MainApp creates ChapterPanel -->
+        <mxCell id="rel_main_panel" value="creates &amp; embeds" style="endArrow=open;dashed=1;html=1;strokeColor=#2563EB;strokeWidth=1.5;" edge="1" parent="1" source="c_mainapp" target="c_panel">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterPanel calls ChapterController -->
+        <mxCell id="rel_panel_ctrl" value="1..1 delegating" style="endArrow=block;html=1;strokeColor=#2563EB;strokeWidth=1.5;" edge="1" parent="1" source="c_panel" target="c_controller">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterController returns ActionResult -->
+        <mxCell id="rel_ctrl_action" value="returns" style="endArrow=open;dashed=1;html=1;strokeColor=#4338CA;strokeWidth=1.5;" edge="1" parent="1" source="c_controller" target="c_actionresult">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterController calls ChapterBao -->
+        <mxCell id="rel_ctrl_bao" value="1..1 facade to" style="endArrow=block;html=1;strokeColor=#D97706;strokeWidth=2;" edge="1" parent="1" source="c_controller" target="c_bao">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterBao implements ChapterLookup -->
+        <mxCell id="rel_bao_lookup" value="implements" style="endArrow=block;dashed=1;endFill=0;html=1;strokeColor=#D97706;strokeWidth=1.5;" edge="1" parent="1" source="c_bao" target="i_lookup">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterBao manages Chapter -->
+        <mxCell id="rel_bao_chapter" value="creates / manages" style="endArrow=open;dashed=1;html=1;strokeColor=#CA8A04;strokeWidth=1.5;" edge="1" parent="1" source="c_bao" target="c_chapter">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ChapterBao calls ChapterDao -->
+        <mxCell id="rel_bao_dao" value="1..1 depends on" style="endArrow=block;html=1;strokeColor=#16A34A;strokeWidth=2;" edge="1" parent="1" source="c_bao" target="i_dao">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- SqlChapterDao implements ChapterDao -->
+        <mxCell id="rel_sqldao_dao" value="implements" style="endArrow=block;dashed=1;endFill=0;html=1;strokeColor=#16A34A;strokeWidth=2;" edge="1" parent="1" source="c_sqldao" target="i_dao">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- SqlChapterDao uses ConnectionProvider -->
+        <mxCell id="rel_sqldao_conn" value="injects" style="endArrow=open;dashed=1;html=1;strokeColor=#16A34A;strokeWidth=1.5;" edge="1" parent="1" source="c_sqldao" target="i_connprov">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- DatabaseManager satisfies ConnectionProvider -->
+        <mxCell id="rel_db_conn" value="DatabaseManager::getConnection" style="endArrow=open;dashed=1;html=1;strokeColor=#15803D;strokeWidth=1.5;" edge="1" parent="1" source="c_dbmanager" target="c_sqldao">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
