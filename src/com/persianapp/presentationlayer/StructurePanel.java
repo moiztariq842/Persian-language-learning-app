@@ -15,8 +15,10 @@ import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
@@ -192,8 +194,27 @@ public class StructurePanel extends JPanel {
             setStatus("پہلے باب منتخب کریں", ERROR_COLOR);
             return;
         }
-        ActionResult result = controller.save(chapterId, currentSelection());
+        List<ComponentType> selection = currentSelection();
+        if (controller.savingRemovesComponents(chapterId, selection) && !confirmRemoval()) {
+            setStatus(StructureMessages.SAVE_CANCELLED, INFO_COLOR);
+            return;
+        }
+        ActionResult result = controller.save(chapterId, selection);
         setStatus(result.getMessage(), result.isSuccess() ? SUCCESS_COLOR : ERROR_COLOR);
+    }
+
+    /** Asks in Urdu whether all saved components may be removed; "No" is the default answer. */
+    private boolean confirmRemoval() {
+        JLabel message = new JLabel(StructureMessages.CONFIRM_REMOVE_ALL);
+        message.setFont(UI_FONT);
+        Object[] options = { StructureMessages.CONFIRM_YES, StructureMessages.CONFIRM_NO };
+        JOptionPane pane = new JOptionPane(message, JOptionPane.WARNING_MESSAGE,
+                JOptionPane.YES_NO_OPTION, null, options, options[1]);
+        JDialog dialog = pane.createDialog(this, StructureMessages.CONFIRM_TITLE);
+        dialog.applyComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+        dialog.setVisible(true);
+        dialog.dispose();
+        return StructureMessages.CONFIRM_YES.equals(pane.getValue());
     }
 
     private List<ComponentType> currentSelection() {

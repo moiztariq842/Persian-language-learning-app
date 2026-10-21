@@ -8,6 +8,11 @@ public final class StructureMessages {
     public static final String SAVED = "باب کی ساخت محفوظ ہو گئی";
     public static final String UNEXPECTED = "درخواست مکمل نہیں ہو سکی";
     public static final String STORAGE_FAILED = "ڈیٹا بیس سے رابطہ نہیں ہو سکا، دوبارہ کوشش کریں";
+    public static final String CONFIRM_REMOVE_ALL = "حصے ہٹا دیے جائیں گے، کیا آپ یقین رکھتے ہیں؟";
+    public static final String CONFIRM_TITLE = "تصدیق";
+    public static final String CONFIRM_YES = "ہاں، ہٹا دیں";
+    public static final String CONFIRM_NO = "نہیں";
+    public static final String SAVE_CANCELLED = "محفوظ کرنا منسوخ کر دیا گیا";
 
     private StructureMessages() {
     }

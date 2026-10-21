@@ -183,6 +183,43 @@ class StructureControllerTest {
         assertThrows(DataAccessException.class, () -> failing.loadSelected(CHAPTER));
     }
 
+    @Test
+    @DisplayName("Saving an empty selection over a saved structure needs confirmation")
+    void emptyOverSavedStructureNeedsConfirmation() {
+        controller.save(CHAPTER, Arrays.asList(ComponentType.EXAMPLES));
+
+        assertTrue(controller.savingRemovesComponents(CHAPTER, Collections.<ComponentType>emptyList()));
+    }
+
+    @Test
+    @DisplayName("Saving an empty selection over nothing needs no confirmation")
+    void emptyOverNothingNeedsNoConfirmation() {
+        assertFalse(controller.savingRemovesComponents(CHAPTER, Collections.<ComponentType>emptyList()));
+    }
+
+    @Test
+    @DisplayName("Saving a non-empty selection needs no confirmation")
+    void nonEmptySelectionNeedsNoConfirmation() {
+        controller.save(CHAPTER, Arrays.asList(ComponentType.EXAMPLES));
+
+        assertFalse(controller.savingRemovesComponents(CHAPTER, Arrays.asList(ComponentType.GLOSSARY)));
+    }
+
+    @Test
+    @DisplayName("The confirmation check ignores an unknown chapter and lets the save report it")
+    void confirmationCheckIgnoresUnknownChapter() {
+        assertFalse(controller.savingRemovesComponents("missing", Collections.<ComponentType>emptyList()));
+    }
+
+    @Test
+    @DisplayName("The confirmation check ignores a storage failure and lets the save report it")
+    void confirmationCheckIgnoresStorageFailure() {
+        StructureController failing = new StructureController(
+                new ChapterStructureBao(new FailingStructureDao(), new StubChapterLookup(CHAPTER)));
+
+        assertFalse(failing.savingRemovesComponents(CHAPTER, Collections.<ComponentType>emptyList()));
+    }
+
     // ---- hand-written stubs (no mocking framework) ----
 
     private static class StubStructureDao implements StructureDao {

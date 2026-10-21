@@ -38,6 +38,23 @@ public class StructureController {
         return bao.getStructure(chapterId).getComponents();
     }
 
+    /**
+     * True when saving this selection would remove components that are currently saved,
+     * that is, an empty selection over a chapter that has a saved structure. The screen uses
+     * it to ask for confirmation first (NFR-US-05). If the check itself cannot be done, the
+     * answer is false and the save reports the real problem.
+     */
+    public boolean savingRemovesComponents(String chapterId, List<ComponentType> selected) {
+        if (!selected.isEmpty()) {
+            return false;
+        }
+        try {
+            return !bao.getStructure(chapterId).isEmpty();
+        } catch (StructureException | DataAccessException e) {
+            return false;
+        }
+    }
+
     /** Validates and saves; the result carries an Urdu message to show the administrator. */
     public ActionResult save(String chapterId, List<ComponentType> selected) {
         try {

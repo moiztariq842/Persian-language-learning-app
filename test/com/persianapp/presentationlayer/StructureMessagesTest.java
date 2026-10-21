@@ -20,11 +20,16 @@ class StructureMessagesTest {
     }
 
     @Test
-    @DisplayName("The success, fallback and storage-failure messages are Urdu")
-    void successFallbackAndStorageFailureAreUrdu() {
+    @DisplayName("The success, fallback, storage and confirmation messages are Urdu")
+    void fixedMessagesAreUrdu() {
         assertIsUrdu(StructureMessages.SAVED);
         assertIsUrdu(StructureMessages.UNEXPECTED);
         assertIsUrdu(StructureMessages.STORAGE_FAILED);
+        assertIsUrdu(StructureMessages.CONFIRM_REMOVE_ALL);
+        assertIsUrdu(StructureMessages.CONFIRM_TITLE);
+        assertIsUrdu(StructureMessages.CONFIRM_YES);
+        assertIsUrdu(StructureMessages.CONFIRM_NO);
+        assertIsUrdu(StructureMessages.SAVE_CANCELLED);
     }
 
     private static void assertIsUrdu(String text) {
