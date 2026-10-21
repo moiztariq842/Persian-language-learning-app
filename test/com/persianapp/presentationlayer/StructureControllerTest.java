@@ -64,12 +64,14 @@ class StructureControllerTest {
     }
 
     @Test
-    @DisplayName("Reports an error for an empty selection and stores nothing")
-    void reportsErrorForEmptySelection() {
+    @DisplayName("Saves an empty selection and clears the saved structure")
+    void savesEmptySelectionAndClearsStructure() {
+        controller.save(CHAPTER, Arrays.asList(ComponentType.EXAMPLES));
+
         ActionResult result = controller.save(CHAPTER, Collections.<ComponentType>emptyList());
-        assertFalse(result.isSuccess());
-        assertFalse(result.getMessage().isEmpty());
-        assertEquals(0, dao.saveCount);
+
+        assertTrue(result.isSuccess());
+        assertTrue(controller.loadSelected(CHAPTER).isEmpty());
     }
 
     @Test
@@ -148,8 +150,9 @@ class StructureControllerTest {
     @Test
     @DisplayName("Reports the Urdu message that matches the error code")
     void reportsUrduMessageForErrorCode() {
-        ActionResult result = controller.save(CHAPTER, Collections.<ComponentType>emptyList());
-        assertEquals(StructureMessages.forCode(StructureErrorCode.EMPTY_SELECTION), result.getMessage());
+        ActionResult result = controller.save(CHAPTER,
+                Arrays.asList(ComponentType.GLOSSARY, ComponentType.GLOSSARY));
+        assertEquals(StructureMessages.forCode(StructureErrorCode.DUPLICATE_COMPONENT), result.getMessage());
     }
 
     @Test

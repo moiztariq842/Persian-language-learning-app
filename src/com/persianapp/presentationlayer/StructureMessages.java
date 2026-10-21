@@ -24,8 +24,6 @@ public final class StructureMessages {
             return "فہرست میں غلط حصہ موجود ہے";
         case DUPLICATE_COMPONENT:
             return "ایک ہی حصہ ایک سے زیادہ بار منتخب نہیں کیا جا سکتا";
-        case EMPTY_SELECTION:
-            return "باب کے لیے کم از کم ایک حصہ منتخب کریں";
         case COMPONENT_NOT_SELECTED:
             return "یہ حصہ باب میں منتخب نہیں ہے";
         case POSITION_OUT_OF_RANGE:

@@ -166,4 +166,16 @@ class SqlStructureDaoTest {
         assertEquals(0, countRows("missing"));
         assertEquals(existing, dao.findByChapterId("ch-1").get());
     }
+
+    @Test
+    @DisplayName("Saving an empty structure removes all stored components")
+    void savingEmptyStructureRemovesStoredComponents() throws SQLException {
+        dao.save(new ChapterStructure("ch-1", Arrays.asList(
+                ComponentType.EXAMPLES, ComponentType.GLOSSARY)));
+
+        dao.save(ChapterStructure.empty("ch-1"));
+
+        assertEquals(0, countRows("ch-1"));
+        assertFalse(dao.findByChapterId("ch-1").isPresent());
+    }
 }

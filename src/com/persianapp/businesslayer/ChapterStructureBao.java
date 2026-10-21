@@ -35,16 +35,13 @@ public class ChapterStructureBao {
 
     /**
      * Validates and saves the selected components in the given order.
+     * An empty selection is allowed and clears the chapter's structure.
      * Validation runs before anything is stored, so a rejected request
      * leaves the last valid structure untouched (BR-06, NFR-RL-02).
      */
     public ChapterStructure saveStructure(String chapterId, List<ComponentType> components) {
         requireExistingChapter(chapterId);
         ChapterStructure structure = new ChapterStructure(chapterId, components);
-        if (structure.isEmpty()) {
-            throw new StructureException(StructureErrorCode.EMPTY_SELECTION,
-                    "Select at least one component for the chapter.");
-        }
         dao.save(structure);
         return structure;
     }

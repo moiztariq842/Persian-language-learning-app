@@ -16,34 +16,35 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 @DisplayName("UC-02: ChapterStructureBao")
 class ChapterStructureBaoTest {
 
     private static final String CHAPTER = "ch-1";
     private static final String OTHER_CHAPTER = "ch-2";
 
-    private StubStructureDao repository;
+    private StubStructureDao dao;
     private StubChapterLookup lookup;
-    private ChapterStructureBao service;
+    private ChapterStructureBao bao;
 
     @BeforeEach
     void setUp() {
-        repository = new StubStructureDao();
+        dao = new StubStructureDao();
         lookup = new StubChapterLookup(CHAPTER, OTHER_CHAPTER);
-        service = new ChapterStructureBao(repository, lookup);
+        bao = new ChapterStructureBao(dao, lookup);
     }
 
     @Test
     @DisplayName("Offers all seven supported components")
     void offersAllComponents() {
-        assertEquals(7, service.getSupportedComponents().size());
-        assertTrue(service.getSupportedComponents().contains(ComponentType.GLOSSARY));
+        assertEquals(7, bao.getSupportedComponents().size());
+        assertTrue(bao.getSupportedComponents().contains(ComponentType.GLOSSARY));
     }
 
     @Test
     @DisplayName("Returns an empty structure when none has been saved")
     void emptyWhenNothingSaved() {
-        assertTrue(service.getStructure(CHAPTER).isEmpty());
+        assertTrue(bao.getStructure(CHAPTER).isEmpty());
     }
 
     @Test
@@ -51,78 +52,81 @@ class ChapterStructureBaoTest {
     void savesValidSelection() {
         List<ComponentType> selection = Arrays.asList(
                 ComponentType.PERSIAN_DIALOGUE, ComponentType.LEARNING_OBJECTIVES, ComponentType.GLOSSARY);
-        service.saveStructure(CHAPTER, selection);
-        assertEquals(selection, service.getStructure(CHAPTER).getComponents());
+        bao.saveStructure(CHAPTER, selection);
+        assertEquals(selection, bao.getStructure(CHAPTER).getComponents());
     }
 
     @Test
     @DisplayName("Saving again replaces the previous structure")
     void saveReplacesPrevious() {
-        service.saveStructure(CHAPTER, Arrays.asList(ComponentType.EXAMPLES));
-        service.saveStructure(CHAPTER, Arrays.asList(ComponentType.GLOSSARY, ComponentType.EXAMPLES));
+        bao.saveStructure(CHAPTER, Arrays.asList(ComponentType.EXAMPLES));
+        bao.saveStructure(CHAPTER, Arrays.asList(ComponentType.GLOSSARY, ComponentType.EXAMPLES));
         assertEquals(Arrays.asList(ComponentType.GLOSSARY, ComponentType.EXAMPLES),
-                service.getStructure(CHAPTER).getComponents());
+                bao.getStructure(CHAPTER).getComponents());
     }
 
     @Test
     @DisplayName("Different chapters can have different structures (FR-CS-05)")
     void chaptersAreIndependent() {
-        service.saveStructure(CHAPTER, Arrays.asList(ComponentType.EXAMPLES));
-        service.saveStructure(OTHER_CHAPTER, Arrays.asList(ComponentType.GLOSSARY));
-        assertEquals(Arrays.asList(ComponentType.EXAMPLES), service.getStructure(CHAPTER).getComponents());
-        assertEquals(Arrays.asList(ComponentType.GLOSSARY), service.getStructure(OTHER_CHAPTER).getComponents());
+        bao.saveStructure(CHAPTER, Arrays.asList(ComponentType.EXAMPLES));
+        bao.saveStructure(OTHER_CHAPTER, Arrays.asList(ComponentType.GLOSSARY));
+        assertEquals(Arrays.asList(ComponentType.EXAMPLES), bao.getStructure(CHAPTER).getComponents());
+        assertEquals(Arrays.asList(ComponentType.GLOSSARY), bao.getStructure(OTHER_CHAPTER).getComponents());
     }
 
     @Test
-    @DisplayName("Rejects an empty selection and stores nothing")
-    void rejectsEmptySelection() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.saveStructure(CHAPTER, Collections.<ComponentType>emptyList()));
-        assertEquals(0, repository.saveCount);
+    @DisplayName("Saving an empty selection clears the saved structure")
+    void savingEmptySelectionClearsStructure() {
+        bao.saveStructure(CHAPTER, Arrays.asList(ComponentType.EXAMPLES, ComponentType.GLOSSARY));
+
+        bao.saveStructure(CHAPTER, Collections.<ComponentType>emptyList());
+
+        assertTrue(bao.getStructure(CHAPTER).isEmpty());
+        assertEquals(2, dao.saveCount);
     }
 
     @Test
     @DisplayName("Rejects a null selection")
     void rejectsNullSelection() {
-        assertThrows(IllegalArgumentException.class, () -> service.saveStructure(CHAPTER, null));
-        assertEquals(0, repository.saveCount);
+        assertThrows(IllegalArgumentException.class, () -> bao.saveStructure(CHAPTER, null));
+        assertEquals(0, dao.saveCount);
     }
 
     @Test
     @DisplayName("A rejected change keeps the last valid structure (BR-06)")
     void keepsLastValidStructure() {
         List<ComponentType> valid = Arrays.asList(ComponentType.LEARNING_OBJECTIVES, ComponentType.EXAMPLES);
-        service.saveStructure(CHAPTER, valid);
+        bao.saveStructure(CHAPTER, valid);
 
-        assertThrows(IllegalArgumentException.class, () -> service.saveStructure(CHAPTER,
+        assertThrows(IllegalArgumentException.class, () -> bao.saveStructure(CHAPTER,
                 Arrays.asList(ComponentType.EXAMPLES, ComponentType.EXAMPLES)));
 
-        assertEquals(valid, service.getStructure(CHAPTER).getComponents());
-        assertEquals(1, repository.saveCount);
+        assertEquals(valid, bao.getStructure(CHAPTER).getComponents());
+        assertEquals(1, dao.saveCount);
     }
 
     @Test
     @DisplayName("Rejects a chapter that does not exist and stores nothing")
     void rejectsUnknownChapter() {
         assertThrows(IllegalArgumentException.class,
-                () -> service.saveStructure("missing", Arrays.asList(ComponentType.EXAMPLES)));
-        assertThrows(IllegalArgumentException.class, () -> service.getStructure("missing"));
-        assertEquals(0, repository.saveCount);
+                () -> bao.saveStructure("missing", Arrays.asList(ComponentType.EXAMPLES)));
+        assertThrows(IllegalArgumentException.class, () -> bao.getStructure("missing"));
+        assertEquals(0, dao.saveCount);
     }
 
     @Test
     @DisplayName("Rejects a blank chapter id")
     void rejectsBlankChapterId() {
         assertThrows(IllegalArgumentException.class,
-                () -> service.saveStructure("  ", Arrays.asList(ComponentType.EXAMPLES)));
-        assertThrows(IllegalArgumentException.class, () -> service.getStructure(null));
+                () -> bao.saveStructure("  ", Arrays.asList(ComponentType.EXAMPLES)));
+        assertThrows(IllegalArgumentException.class, () -> bao.getStructure(null));
     }
 
     @Test
     @DisplayName("Requires both collaborators")
     void requiresCollaborators() {
         assertThrows(IllegalArgumentException.class, () -> new ChapterStructureBao(null, lookup));
-        assertThrows(IllegalArgumentException.class, () -> new ChapterStructureBao(repository, null));
+        assertThrows(IllegalArgumentException.class, () -> new ChapterStructureBao(dao, null));
     }
 
     // ---- hand-written stubs (no mocking framework) ----

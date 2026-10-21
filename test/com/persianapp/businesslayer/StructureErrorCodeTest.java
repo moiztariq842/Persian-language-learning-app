@@ -76,13 +76,6 @@ class StructureErrorCodeTest {
     }
 
     @Test
-    @DisplayName("Saving an empty selection gives EMPTY_SELECTION")
-    void emptySelection() {
-        assertEquals(StructureErrorCode.EMPTY_SELECTION,
-                codeOf(() -> baoWithChapter("ch-1").saveStructure("ch-1", Collections.<ComponentType>emptyList())));
-    }
-
-    @Test
     @DisplayName("Saving for an unknown chapter gives CHAPTER_NOT_FOUND")
     void unknownChapter() {
         assertEquals(StructureErrorCode.CHAPTER_NOT_FOUND,
