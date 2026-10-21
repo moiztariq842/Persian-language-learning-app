@@ -14,8 +14,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-// Tests MySQL schema creation and table constraints.
-@DisplayName("DatabaseManager — MySQL Tests")
+// Tests MySQL chapters table schema and constraints for UC-01.
+@DisplayName("DatabaseManager — UC-01 MySQL Tests")
 public class DatabaseManagerTest {
 
     private Connection conn;
@@ -59,76 +59,52 @@ public class DatabaseManagerTest {
     }
 
     @Test
-    @DisplayName("Should insert a chapter component linked to a chapter")
-    void testInsertChapterComponent() throws SQLException {
-        String chapterId   = UUID.randomUUID().toString();
-        String componentId = UUID.randomUUID().toString();
+    @DisplayName("Should update chapter title in MySQL")
+    void testUpdateChapterTitle() throws SQLException {
+        String id = UUID.randomUUID().toString();
+        insert(conn, "INSERT INTO chapters (id, title) VALUES (?, ?)", id, "Original");
 
-        insert(conn, "INSERT INTO chapters (id, title) VALUES (?, ?)", chapterId, "درس دوم");
         try {
-            insert(conn, "INSERT INTO chapter_components (id, chapter_id, type, sequence) VALUES (?, ?, ?, ?)",
-                   componentId, chapterId, "DIALOGUE", "1");
+            try (PreparedStatement ps = conn.prepareStatement("UPDATE chapters SET title = ? WHERE id = ?")) {
+                ps.setString(1, "Updated");
+                ps.setString(2, id);
+                ps.executeUpdate();
+            }
 
-            try (PreparedStatement ps = conn.prepareStatement("SELECT type FROM chapter_components WHERE id = ?")) {
-                ps.setString(1, componentId);
+            try (PreparedStatement ps = conn.prepareStatement("SELECT title FROM chapters WHERE id = ?")) {
+                ps.setString(1, id);
                 ResultSet rs = ps.executeQuery();
                 assertTrue(rs.next());
-                assertEquals("DIALOGUE", rs.getString("type"));
+                assertEquals("Updated", rs.getString("title"));
             }
         } finally {
-            delete(conn, "DELETE FROM chapters WHERE id = ?", chapterId);
+            delete(conn, "DELETE FROM chapters WHERE id = ?", id);
         }
     }
 
     @Test
-    @DisplayName("Should reject an invalid component type in MySQL")
-    void testInvalidComponentTypeRejected() throws SQLException {
-        String chapterId = UUID.randomUUID().toString();
-        insert(conn, "INSERT INTO chapters (id, title) VALUES (?, ?)", chapterId, "Test");
-
-        try {
-            assertThrows(SQLException.class, () ->
-                insert(conn, "INSERT INTO chapter_components (id, chapter_id, type, sequence) VALUES (?, ?, ?, ?)",
-                       UUID.randomUUID().toString(), chapterId, "INVALID_TYPE", "1"));
-        } finally {
-            delete(conn, "DELETE FROM chapters WHERE id = ?", chapterId);
-        }
-    }
-
-    @Test
-    @DisplayName("Deleting a chapter cascades in MySQL")
-    void testCascadeDeleteChapter() throws SQLException {
-        String chapterId   = UUID.randomUUID().toString();
-        String componentId = UUID.randomUUID().toString();
-        String contentId   = UUID.randomUUID().toString();
-        String glossaryId  = UUID.randomUUID().toString();
-
-        insert(conn, "INSERT INTO chapters (id, title) VALUES (?, ?)", chapterId, "Cascade Test");
-        insert(conn, "INSERT INTO chapter_components (id, chapter_id, type, sequence) VALUES (?, ?, ?, ?)",
-               componentId, chapterId, "GRAMMAR_NOTE", "1");
-        insert(conn, "INSERT INTO component_contents (id, component_id, persian_text, urdu_text) VALUES (?, ?, ?, ?)",
-               contentId, componentId, "است", "ہے");
-        insert(conn, "INSERT INTO glossary_entries (id, chapter_id, persian_word, urdu_meaning) VALUES (?, ?, ?, ?)",
-               glossaryId, chapterId, "کتاب", "کتاب");
+    @DisplayName("Should delete chapter from MySQL")
+    void testDeleteChapter() throws SQLException {
+        String id = UUID.randomUUID().toString();
+        insert(conn, "INSERT INTO chapters (id, title) VALUES (?, ?)", id, "To Delete");
 
         try (PreparedStatement ps = conn.prepareStatement("DELETE FROM chapters WHERE id = ?")) {
-            ps.setString(1, chapterId);
+            ps.setString(1, id);
             assertEquals(1, ps.executeUpdate());
         }
 
-        assertEquals(0, count(conn, "chapter_components", "id", componentId));
-        assertEquals(0, count(conn, "component_contents", "id", contentId));
-        assertEquals(0, count(conn, "glossary_entries", "id", glossaryId));
+        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM chapters WHERE id = ?")) {
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            assertTrue(rs.next());
+            assertEquals(0, rs.getInt(1));
+        }
     }
 
     private void insert(Connection conn, String sql, String... params) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             for (int i = 0; i < params.length; i++) {
-                if (params[i].matches("\\d+")) {
-                    ps.setInt(i + 1, Integer.parseInt(params[i]));
-                } else {
-                    ps.setString(i + 1, params[i]);
-                }
+                ps.setString(i + 1, params[i]);
             }
             ps.executeUpdate();
         }
@@ -139,13 +115,5 @@ public class DatabaseManagerTest {
             ps.setString(1, id);
             ps.executeUpdate();
         } catch (SQLException ignored) {}
-    }
-
-    private int count(Connection conn, String table, String col, String val) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM " + table + " WHERE " + col + " = ?")) {
-            ps.setString(1, val);
-            ResultSet rs = ps.executeQuery();
-            return rs.next() ? rs.getInt(1) : 0;
-        }
     }
 }
