@@ -1,15 +1,25 @@
 @echo off
-REM ========================================================
-REM Run Script for Persian Language Learning App
-REM Launches the application in In-Memory Demo Mode
-REM (Runs 100% standalone without requiring MySQL/MariaDB)
-REM ========================================================
+setlocal
+cd /d "%~dp0"
 
-if not exist bin\com (
-    echo Building project...
+echo ========================================================
+echo  Persian Language Learning App (In-Memory / No DB)
+echo ========================================================
+
+if not exist "bin\com\persianapp\presentationlayer\MainApp.class" (
+    echo [INFO] Compiling project...
     call build.bat
-    if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+    if errorlevel 1 (
+        echo [ERROR] Compilation failed!
+        pause
+        exit /b 1
+    )
 )
 
-echo Starting Persian Language Learning App in In-Memory Mode (No DB)...
-java -Dfile.encoding=UTF-8 -cp "bin;lib\*" com.persianapp.presentationlayer.MainApp --no-db
+echo [INFO] Launching Persian Language Learning App in In-Memory Mode...
+java "-Dfile.encoding=UTF-8" -cp "bin;lib\*" com.persianapp.presentationlayer.MainApp --no-db
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Application exited with error code %ERRORLEVEL%
+    pause
+)

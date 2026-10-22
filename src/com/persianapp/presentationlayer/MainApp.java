@@ -56,12 +56,43 @@ public class MainApp extends JFrame {
 
         final boolean inMemory = forceNoDb || !DatabaseManager.isAvailable();
 
+        System.out.println("=========================================================");
+        System.out.println(" Persian Language Learning App");
+        System.out.println(" Mode: " + (inMemory ? "IN-MEMORY (Standalone — No DB)" : "MYSQL DATABASE"));
+        System.out.println(" Status: Launching GUI window...");
+        System.out.println("=========================================================");
+
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception ignored) {}
 
-            new MainApp(inMemory).setVisible(true);
+            try {
+                MainApp app;
+                if (!inMemory) {
+                    try {
+                        app = new MainApp(false);
+                    } catch (Throwable dbErr) {
+                        System.err.println("[WARN] Database initialization failed: " + dbErr.getMessage());
+                        System.err.println("[INFO] Falling back to In-Memory Demo mode...");
+                        app = new MainApp(true);
+                    }
+                } else {
+                    app = new MainApp(true);
+                }
+                app.setVisible(true);
+                app.toFront();
+                app.setAlwaysOnTop(true);
+                app.setAlwaysOnTop(false);
+                app.requestFocus();
+                System.out.println("[SUCCESS] MainApp window is now open on your desktop.");
+            } catch (Throwable t) {
+                System.err.println("[ERROR] Failed to create or display MainApp:");
+                t.printStackTrace();
+                JOptionPane.showMessageDialog(null,
+                        "Failed to launch application:\n" + t.getMessage(),
+                        "Launch Error", JOptionPane.ERROR_MESSAGE);
+            }
         });
     }
 

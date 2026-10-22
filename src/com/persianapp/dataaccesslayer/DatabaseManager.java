@@ -1,5 +1,7 @@
 package com.persianapp.dataaccesslayer;
 
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -27,8 +29,23 @@ public class DatabaseManager {
 
     private DatabaseManager() {}
 
-    // Checks if the database server is currently reachable.
+    // Checks if the database server port is reachable AND the connection/credentials succeed.
     public static boolean isAvailable() {
+        String host = getConfig("DB_HOST", "localhost");
+        int    port;
+        try {
+            port = Integer.parseInt(getConfig("DB_PORT", "3306"));
+        } catch (NumberFormatException e) {
+            port = 3306;
+        }
+        // 1. Fast socket connectivity check (fails in < 400ms if no DB is listening)
+        try (Socket s = new Socket()) {
+            s.connect(new InetSocketAddress(host, port), 400);
+        } catch (Throwable t) {
+            return false;
+        }
+
+        // 2. Fast credentials/login check (fails if password is wrong or database is unreachable)
         try {
             DriverManager.setLoginTimeout(2);
             try (Connection testConn = DriverManager.getConnection(databaseUrl, dbUser, dbPassword)) {
