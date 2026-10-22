@@ -1,0 +1,10 @@
+# ========================================================
+# Database Configuration for Persian Language Learning App
+# ========================================================
+# Copy this file to 'db.properties' and fill in your MySQL credentials:
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=persian_app
+DB_USER=root
+DB_PASSWORD=

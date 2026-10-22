@@ -1,26 +1,31 @@
 package com.persianapp.dataaccesslayer;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 
 /**
  * Manages the MySQL/MariaDB database connection and schema for the full application.
  * Covers all four use cases: UC-01 chapters, UC-02 chapter_components (structure),
  * UC-03 component_contents, and UC-04 glossary_entries.
  *
- * Connection settings can be overridden via system properties or environment variables:
+ * Connection settings can be configured via db.properties, system properties, or environment variables:
  *   DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
  */
 public class DatabaseManager {
 
-    private static String     dbUser      = getConfig("DB_USER",     "root");
-    private static String     dbPassword  = getConfig("DB_PASSWORD", "");
-    private static String     databaseUrl = buildDefaultUrl();
-    private static Connection connection;
+    private static final Properties fileProps   = loadProperties();
+    private static String           dbUser      = getConfig("DB_USER",     "root");
+    private static String           dbPassword  = getConfig("DB_PASSWORD", "");
+    private static String           databaseUrl = buildDefaultUrl();
+    private static Connection       connection;
 
     static {
         tryLoadDriver("com.mysql.cj.jdbc.Driver");
@@ -31,6 +36,7 @@ public class DatabaseManager {
 
     // Checks if the database server port is reachable AND the connection/credentials succeed.
     public static boolean isAvailable() {
+        reloadConfig();
         String host = getConfig("DB_HOST", "localhost");
         int    port;
         try {
@@ -164,12 +170,56 @@ public class DatabaseManager {
                "&createDatabaseIfNotExist=true";
     }
 
-    // Reads a configuration parameter from system properties or environment.
+    // Reads a configuration parameter from system properties, environment, or db.properties.
     private static String getConfig(String key, String defaultValue) {
         String val = System.getProperty(key);
-        if (val != null && !val.isBlank()) return val;
+        if (val != null && !val.isBlank()) return val.trim();
         val = System.getenv(key);
-        return (val != null && !val.isBlank()) ? val : defaultValue;
+        if (val != null && !val.isBlank()) return val.trim();
+        if (fileProps != null) {
+            val = fileProps.getProperty(key);
+            if (val == null) val = fileProps.getProperty(key.toLowerCase());
+            if (val == null) val = fileProps.getProperty(key.toLowerCase().replace('_', '.'));
+            if (val != null && !val.isBlank()) return val.trim();
+        }
+        return defaultValue;
+    }
+
+    // Loads properties from db.properties if present (working directory, resources, or classpath).
+    private static Properties loadProperties() {
+        Properties p = new Properties();
+        File f = new File("db.properties");
+        if (f.exists()) {
+            try (FileInputStream fis = new FileInputStream(f)) {
+                p.load(fis);
+                return p;
+            } catch (Exception ignored) {}
+        }
+        try (InputStream is = DatabaseManager.class.getClassLoader().getResourceAsStream("db.properties")) {
+            if (is != null) {
+                p.load(is);
+                return p;
+            }
+        } catch (Exception ignored) {}
+        File res = new File("resources" + File.separator + "db.properties");
+        if (res.exists()) {
+            try (FileInputStream fis = new FileInputStream(res)) {
+                p.load(fis);
+                return p;
+            } catch (Exception ignored) {}
+        }
+        return p;
+    }
+
+    // Reloads db.properties and refreshes active connection parameters.
+    public static synchronized void reloadConfig() {
+        closeConnection();
+        Properties fresh = loadProperties();
+        fileProps.clear();
+        fileProps.putAll(fresh);
+        dbUser      = getConfig("DB_USER",     "root");
+        dbPassword  = getConfig("DB_PASSWORD", "");
+        databaseUrl = buildDefaultUrl();
     }
 
     // Loads the MySQL JDBC driver class.

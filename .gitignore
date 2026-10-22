@@ -7,6 +7,7 @@ bin/
 *.db
 *.db-journal
 persian_app.db
+db.properties
 
 # IDE & Editor settings
 .idea/
