@@ -22,9 +22,22 @@ public class DatabaseManager {
 
     static {
         tryLoadDriver("com.mysql.cj.jdbc.Driver");
+        tryLoadDriver("org.mariadb.jdbc.Driver");
     }
 
     private DatabaseManager() {}
+
+    // Checks if the database server is currently reachable.
+    public static boolean isAvailable() {
+        try {
+            DriverManager.setLoginTimeout(2);
+            try (Connection testConn = DriverManager.getConnection(databaseUrl, dbUser, dbPassword)) {
+                return testConn != null && !testConn.isClosed();
+            }
+        } catch (Throwable t) {
+            return false;
+        }
+    }
 
     // Sets the database URL and resets credentials from env/props.
     public static synchronized void setDatabaseUrl(String newUrl) {
