@@ -1,62 +1,98 @@
 package com.persianapp.dataaccesslayer;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.Properties;
 
 /**
- * Manages SQLite database connection and schema initialization for UC-01.
+ * Manages MariaDB database connections for the application.
+ *
+ * <p>Reads connection settings from {@code db.properties} on the classpath.
+ * No schema is created here – run {@code resources/schema.sql} once through
+ * XAMPP / phpMyAdmin to initialise the tables.</p>
+ *
+ * <p>The connection can be overridden via {@link #setConnectionInfo} for
+ * testing purposes.</p>
  */
 public class DatabaseManager {
 
-    public static final String DEFAULT_DB_URL = "jdbc:sqlite:persian_app.db";
-    private static String databaseUrl = DEFAULT_DB_URL;
+    private static final String PROPERTIES_FILE = "db.properties";
+
+    private static String dbUrl;
+    private static String dbUser;
+    private static String dbPassword;
     private static Connection connection;
+    private static boolean configured = false;
 
     private DatabaseManager() {
-        // Utility class
+        // Utility class — no instantiation
     }
 
-    public static synchronized void setDatabaseUrl(String newUrl) {
+    // ── Configuration ────────────────────────────────────────
+
+    /**
+     * Loads connection settings from {@code db.properties} on the classpath.
+     * Called automatically on first {@link #getConnection()} if not already
+     * configured.
+     */
+    private static void loadProperties() {
+        Properties props = new Properties();
+        try (InputStream in = DatabaseManager.class.getClassLoader()
+                .getResourceAsStream(PROPERTIES_FILE)) {
+            if (in == null) {
+                throw new RuntimeException(
+                        "Configuration file '" + PROPERTIES_FILE + "' not found on classpath. "
+                        + "Make sure resources/ is on the classpath.");
+            }
+            props.load(in);
+            dbUrl      = props.getProperty("db.url");
+            dbUser     = props.getProperty("db.user", "root");
+            dbPassword = props.getProperty("db.password", "");
+            configured = true;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load database configuration.", e);
+        }
+    }
+
+    /**
+     * Allows overriding the connection info programmatically (e.g., for tests).
+     *
+     * @param url      JDBC URL
+     * @param user     database user
+     * @param password database password
+     */
+    public static synchronized void setConnectionInfo(String url, String user, String password) {
         closeConnection();
-        databaseUrl = (newUrl != null && !newUrl.isBlank()) ? newUrl : DEFAULT_DB_URL;
+        dbUrl      = url;
+        dbUser     = user;
+        dbPassword = password;
+        configured = true;
     }
 
+    // ── Connection ───────────────────────────────────────────
+
+    /**
+     * Returns a shared database connection. Creates one if necessary.
+     *
+     * @return a live {@link Connection}
+     * @throws SQLException if a connection cannot be established
+     */
     public static synchronized Connection getConnection() throws SQLException {
+        if (!configured) {
+            loadProperties();
+        }
         if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(databaseUrl);
-            initSchema(connection);
+            connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
         }
         return connection;
     }
 
-    private static void initSchema(Connection conn) throws SQLException {
-        try (Statement stmt = conn.createStatement()) {
-            stmt.execute("PRAGMA foreign_keys = ON;");
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS chapters (
-                    id          TEXT PRIMARY KEY,
-                    title       TEXT NOT NULL CHECK(length(trim(title)) > 0),
-                    created_at  INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-                );
-            """);
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_chapters_created_at ON chapters(created_at ASC);");
-
-            // UC-04: Glossary Management table
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS glossary_entries (
-                    id           TEXT PRIMARY KEY,
-                    chapter_id   TEXT NOT NULL,
-                    persian_word TEXT NOT NULL CHECK(length(trim(persian_word)) > 0),
-                    urdu_meaning TEXT NOT NULL CHECK(length(trim(urdu_meaning)) > 0),
-                    FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE
-                );
-            """);
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_glossary_chapter_id ON glossary_entries(chapter_id);");
-        }
-    }
-
+    /**
+     * Closes the current connection, if any.
+     */
     public static synchronized void closeConnection() {
         if (connection != null) {
             try {
@@ -64,14 +100,22 @@ public class DatabaseManager {
                     connection.close();
                 }
             } catch (SQLException ignored) {
+                // best-effort close
             } finally {
                 connection = null;
             }
         }
     }
 
+    /**
+     * Resets the manager to its initial state (closes connection, clears config).
+     * Primarily for test tear-down.
+     */
     public static synchronized void reset() {
         closeConnection();
-        databaseUrl = DEFAULT_DB_URL;
+        dbUrl      = null;
+        dbUser     = null;
+        dbPassword = null;
+        configured = false;
     }
 }

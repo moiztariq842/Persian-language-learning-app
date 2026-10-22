@@ -1,28 +1,37 @@
 -- ========================================================
--- SQLite Database Schema for UC-01: Manage Chapters
+-- MariaDB Database Schema
+-- Persian Language Learning App
 -- ========================================================
 
-PRAGMA foreign_keys = ON;
+-- Create the database with utf8mb4 so Persian and Urdu text survive (FR-CS-07).
+CREATE DATABASE IF NOT EXISTS persian_app
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
 
--- Chapters Table (UC-01 Core Entity)
+USE persian_app;
+
+-- ========================================================
+-- UC-01: Chapters Table (owned by UC-01 member)
+-- ========================================================
+
 CREATE TABLE IF NOT EXISTS chapters (
-    id          TEXT PRIMARY KEY,
-    title       TEXT NOT NULL CHECK(length(trim(title)) > 0),
-    created_at  INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-);
-
-CREATE INDEX IF NOT EXISTS idx_chapters_created_at ON chapters(created_at ASC);
+    id          CHAR(36)     PRIMARY KEY,
+    title       VARCHAR(255) NOT NULL,
+    created_at  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ========================================================
--- SQLite Database Schema for UC-04: Glossary Management
+-- UC-04: Glossary Management Table
 -- ========================================================
 
 CREATE TABLE IF NOT EXISTS glossary_entries (
-    id           TEXT PRIMARY KEY,
-    chapter_id   TEXT NOT NULL,
-    persian_word TEXT NOT NULL CHECK(length(trim(persian_word)) > 0),
-    urdu_meaning TEXT NOT NULL CHECK(length(trim(urdu_meaning)) > 0),
-    FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE
-);
+    id           CHAR(36)     PRIMARY KEY,
+    chapter_id   CHAR(36)     NOT NULL,
+    persian_word VARCHAR(255) NOT NULL,
+    urdu_meaning VARCHAR(500) NOT NULL,
+    created_at   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    CONSTRAINT fk_gloss_chapter
+        FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX IF NOT EXISTS idx_glossary_chapter_id ON glossary_entries(chapter_id);
+CREATE INDEX idx_glossary_chapter_id ON glossary_entries(chapter_id);
