@@ -6,24 +6,20 @@ import java.util.Objects;
  * Represents a single glossary entry: a Persian word and its Urdu meaning,
  * belonging to a specific chapter.
  *
- * <p>This is a pure domain object (POJO) with no database or UI logic.
+ * <p>This is an immutable domain object (POJO) with no database or UI logic.
+ * Fields are final — once created, an entry's data cannot be changed.
+ * To "update" an entry, create a new instance with the desired values.
  * It maps to Data Requirement 6.2 in the SRS.</p>
  *
- * @see com.persianapp.dataaccesslayer.GlossaryEntryDAO
+ * @see GlossaryEntryDAO
  * @see GlossaryService
  */
 public class GlossaryEntry {
 
-    private String id;
-    private String chapterId;
-    private String persianWord;
-    private String urduMeaning;
-
-    /**
-     * Default constructor.
-     */
-    public GlossaryEntry() {
-    }
+    private final String id;
+    private final String chapterId;
+    private final String persianWord;
+    private final String urduMeaning;
 
     /**
      * Full constructor.
@@ -56,24 +52,6 @@ public class GlossaryEntry {
 
     public String getUrduMeaning() {
         return urduMeaning;
-    }
-
-    // ── Setters ──────────────────────────────────────────────
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public void setChapterId(String chapterId) {
-        this.chapterId = chapterId;
-    }
-
-    public void setPersianWord(String persianWord) {
-        this.persianWord = persianWord;
-    }
-
-    public void setUrduMeaning(String urduMeaning) {
-        this.urduMeaning = urduMeaning;
     }
 
     // ── equals / hashCode (identity based on id) ─────────────

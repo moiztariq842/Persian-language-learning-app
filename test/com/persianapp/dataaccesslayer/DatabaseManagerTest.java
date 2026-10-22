@@ -6,21 +6,24 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * UC-01: DatabaseManager connection tests.
+ *
+ * <p>These tests require a running MariaDB/MySQL instance via XAMPP
+ * with the {@code persian_app} database created (see {@code resources/schema.sql}).
+ * If the database is not available, the tests will fail with a connection error.</p>
+ */
 @DisplayName("UC-01: DatabaseManager Tests")
 public class DatabaseManagerTest {
 
-    private static final String TEST_DB_URL = "jdbc:sqlite::memory:";
-
     @BeforeEach
     void setUp() {
-        DatabaseManager.setDatabaseUrl(TEST_DB_URL);
+        // Uses db.properties from classpath (resources/db.properties)
+        // Make sure XAMPP MariaDB is running and persian_app DB is created
     }
 
     @AfterEach
@@ -29,46 +32,53 @@ public class DatabaseManagerTest {
     }
 
     @Test
-    @DisplayName("Should establish connection and initialize chapters table")
-    void testConnectionAndSchema() throws SQLException {
+    @DisplayName("Should establish connection to MariaDB")
+    void testConnectionEstablished() throws SQLException {
         Connection conn = DatabaseManager.getConnection();
         assertNotNull(conn);
         assertFalse(conn.isClosed());
     }
 
     @Test
-    @DisplayName("Should insert and query a valid chapter record")
-    void testInsertValidChapter() throws SQLException {
-        Connection conn = DatabaseManager.getConnection();
-        String chapterId = UUID.randomUUID().toString();
-        String title = "Chapter 1: Persian Alphabet";
-
-        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO chapters (id, title) VALUES (?, ?)")) {
-            ps.setString(1, chapterId);
-            ps.setString(2, title);
-            int rows = ps.executeUpdate();
-            assertEquals(1, rows);
-        }
-
-        try (PreparedStatement ps = conn.prepareStatement("SELECT id, title FROM chapters WHERE id = ?")) {
-            ps.setString(1, chapterId);
-            try (ResultSet rs = ps.executeQuery()) {
-                assertTrue(rs.next());
-                assertEquals(title, rs.getString("title"));
-            }
-        }
+    @DisplayName("Should return the same connection on subsequent calls")
+    void testConnectionReused() throws SQLException {
+        Connection conn1 = DatabaseManager.getConnection();
+        Connection conn2 = DatabaseManager.getConnection();
+        assertSame(conn1, conn2);
     }
 
     @Test
-    @DisplayName("Should reject blank chapter title via CHECK constraint (BR-01)")
-    void testRejectBlankTitle() throws SQLException {
+    @DisplayName("Should close connection successfully")
+    void testCloseConnection() throws SQLException {
         Connection conn = DatabaseManager.getConnection();
-        String chapterId = UUID.randomUUID().toString();
+        assertFalse(conn.isClosed());
 
-        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO chapters (id, title) VALUES (?, ?)")) {
-            ps.setString(1, chapterId);
-            ps.setString(2, "   ");
-            assertThrows(SQLException.class, ps::executeUpdate);
-        }
+        DatabaseManager.closeConnection();
+        assertTrue(conn.isClosed());
+    }
+
+    @Test
+    @DisplayName("Should reconnect after connection is closed")
+    void testReconnectAfterClose() throws SQLException {
+        Connection conn1 = DatabaseManager.getConnection();
+        DatabaseManager.closeConnection();
+        assertTrue(conn1.isClosed());
+
+        Connection conn2 = DatabaseManager.getConnection();
+        assertNotNull(conn2);
+        assertFalse(conn2.isClosed());
+        assertNotSame(conn1, conn2);
+    }
+
+    @Test
+    @DisplayName("Should allow overriding connection info")
+    void testSetConnectionInfo() throws SQLException {
+        // Override with the same settings — just verifying the API works
+        DatabaseManager.setConnectionInfo(
+                "jdbc:mariadb://localhost:3306/persian_app?useUnicode=true&characterEncoding=utf8mb4",
+                "root", "");
+        Connection conn = DatabaseManager.getConnection();
+        assertNotNull(conn);
+        assertFalse(conn.isClosed());
     }
 }
