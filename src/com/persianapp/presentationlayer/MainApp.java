@@ -1,7 +1,6 @@
 package com.persianapp.presentationlayer;
 
 import com.persianapp.businesslayer.GlossaryService;
-import com.persianapp.dataaccesslayer.DatabaseManager;
 import com.persianapp.dataaccesslayer.GlossaryEntryDAOImpl;
 
 import javax.swing.*;
