@@ -1,8 +1,5 @@
 package com.persianapp.businesslayer;
 
-import com.persianapp.dataaccesslayer.GlossaryEntryDAO;
-
-import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,14 +39,21 @@ public class GlossaryService {
      * @param urduMeaning the Urdu meaning
      * @return the created entry with a system-generated id
      * @throws IllegalArgumentException if validation fails (BR-03, BR-07)
-     * @throws SQLException             if a database error occurs
+     * @throws GlossaryException        if a persistence error occurs
      */
     public GlossaryEntry addEntry(String chapterId, String persianWord, String urduMeaning)
-            throws SQLException {
+            throws GlossaryException {
 
         validateChapterId(chapterId);
         validatePersianWord(persianWord);
         validateUrduMeaning(urduMeaning);
+
+        // FR-GL-06: verify the chapter actually exists
+        if (!dao.chapterExists(chapterId.trim())) {
+            throw new IllegalArgumentException(
+                    "مذکورہ باب موجود نہیں ہے۔ براہ کرم درست باب منتخب کریں۔\n"
+                    + "(The specified chapter does not exist. Please select a valid chapter.)");
+        }
 
         GlossaryEntry entry = new GlossaryEntry(
                 UUID.randomUUID().toString(),
@@ -63,13 +67,13 @@ public class GlossaryService {
     }
 
     /**
-     * Retrieves all glossary entries for a chapter (FR-GL-03).
+     * Retrieves all glossary entries for a chapter, ordered by creation time (FR-GL-03).
      *
      * @param chapterId the parent chapter identifier
      * @return list of entries, possibly empty
-     * @throws SQLException if a database error occurs
+     * @throws GlossaryException if a persistence error occurs
      */
-    public List<GlossaryEntry> getEntries(String chapterId) throws SQLException {
+    public List<GlossaryEntry> getEntries(String chapterId) throws GlossaryException {
         validateChapterId(chapterId);
         return dao.getEntriesByChapterId(chapterId);
     }
@@ -79,9 +83,9 @@ public class GlossaryService {
      *
      * @param id the entry identifier
      * @return the entry, or {@code null} if not found
-     * @throws SQLException if a database error occurs
+     * @throws GlossaryException if a persistence error occurs
      */
-    public GlossaryEntry getEntryById(String id) throws SQLException {
+    public GlossaryEntry getEntryById(String id) throws GlossaryException {
         if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("Entry ID must not be blank.");
         }
@@ -92,24 +96,37 @@ public class GlossaryService {
      * Updates an existing glossary entry after validation (FR-GL-04).
      *
      * <p>If validation fails, the previously saved valid data is not
-     * replaced (BR-06).</p>
+     * replaced (BR-06). A new object is built for the DAO so the caller's
+     * object is never mutated as a side effect.</p>
      *
      * @param entry the entry with updated values
-     * @throws IllegalArgumentException if validation fails (BR-03, BR-07)
-     * @throws SQLException             if a database error occurs
+     * @throws IllegalArgumentException if validation fails or entry not found
+     * @throws GlossaryException        if a persistence error occurs
      */
-    public void updateEntry(GlossaryEntry entry) throws SQLException {
+    public void updateEntry(GlossaryEntry entry) throws GlossaryException {
         if (entry == null) {
             throw new IllegalArgumentException("Entry must not be null.");
+        }
+        if (entry.getId() == null || entry.getId().isBlank()) {
+            throw new IllegalArgumentException("Entry ID must not be blank.");
         }
         validatePersianWord(entry.getPersianWord());
         validateUrduMeaning(entry.getUrduMeaning());
 
-        // Trim before saving
-        entry.setPersianWord(entry.getPersianWord().trim());
-        entry.setUrduMeaning(entry.getUrduMeaning().trim());
+        // Build a new object instead of mutating the caller's (issue #8)
+        GlossaryEntry trimmed = new GlossaryEntry(
+                entry.getId(),
+                entry.getChapterId(),
+                entry.getPersianWord().trim(),
+                entry.getUrduMeaning().trim()
+        );
 
-        dao.updateEntry(entry);
+        boolean updated = dao.updateEntry(trimmed);
+        if (!updated) {
+            throw new IllegalArgumentException(
+                    "اندراج نہیں ملا۔ ممکن ہے یہ پہلے سے حذف ہو چکا ہو۔\n"
+                    + "(Entry not found. It may have been deleted.)");
+        }
     }
 
     /**
@@ -119,9 +136,9 @@ public class GlossaryService {
      * has obtained user confirmation (BR-04).</p>
      *
      * @param id the entry identifier
-     * @throws SQLException if a database error occurs
+     * @throws GlossaryException if a persistence error occurs
      */
-    public void deleteEntry(String id) throws SQLException {
+    public void deleteEntry(String id) throws GlossaryException {
         if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("Entry ID must not be blank.");
         }
@@ -132,9 +149,9 @@ public class GlossaryService {
      * Deletes all glossary entries for a chapter (FR-CH-07).
      *
      * @param chapterId the parent chapter identifier
-     * @throws SQLException if a database error occurs
+     * @throws GlossaryException if a persistence error occurs
      */
-    public void deleteEntriesByChapterId(String chapterId) throws SQLException {
+    public void deleteEntriesByChapterId(String chapterId) throws GlossaryException {
         validateChapterId(chapterId);
         dao.deleteEntriesByChapterId(chapterId);
     }

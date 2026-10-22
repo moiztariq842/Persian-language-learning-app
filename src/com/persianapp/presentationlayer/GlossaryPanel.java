@@ -1,13 +1,13 @@
 package com.persianapp.presentationlayer;
 
 import com.persianapp.businesslayer.GlossaryEntry;
+import com.persianapp.businesslayer.GlossaryException;
 import com.persianapp.businesslayer.GlossaryService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -35,10 +35,10 @@ public class GlossaryPanel extends JPanel {
     private JButton refreshButton;
     private JLabel statusLabel;
 
-    // ── RTL Font for Persian / Urdu ──────────────────────────
+    // ── RTL Font for Persian / Urdu (NFR-US-04, issue #11) ──
 
-    private static final Font RTL_FONT = new Font("Tahoma", Font.PLAIN, 16);
-    private static final Font UI_FONT = new Font("Tahoma", Font.PLAIN, 14);
+    private static final Font RTL_FONT = new Font("Segoe UI", Font.PLAIN, 16);
+    private static final Font UI_FONT  = new Font("Segoe UI", Font.PLAIN, 14);
 
     /**
      * Constructs the glossary panel.
@@ -58,7 +58,7 @@ public class GlossaryPanel extends JPanel {
 
         // Title label
         JLabel titleLabel = new JLabel("لغت کا انتظام — Glossary Management");
-        titleLabel.setFont(new Font("Tahoma", Font.BOLD, 18));
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         add(titleLabel, BorderLayout.NORTH);
 
@@ -177,8 +177,8 @@ public class GlossaryPanel extends JPanel {
                 });
             }
             setStatus("اندراجات: " + entries.size() + " — Entries loaded: " + entries.size());
-        } catch (SQLException ex) {
-            showError("لغت لوڈ کرنے میں خرابی: " + ex.getMessage());
+        } catch (GlossaryException ex) {
+            showError("لغت لوڈ کرنے میں خرابی۔\n(Error loading glossary.)");
         }
     }
 
@@ -187,6 +187,7 @@ public class GlossaryPanel extends JPanel {
     /**
      * Handles the Add button click (FR-GL-02).
      * Shows a dialog for entering a new Persian word and Urdu meaning.
+     * BR-07/BR-09: re-opens the dialog with entered values when validation fails.
      */
     private void handleAdd() {
         if (currentChapterId == null || currentChapterId.isBlank()) {
@@ -194,30 +195,38 @@ public class GlossaryPanel extends JPanel {
             return;
         }
 
-        JPanel inputPanel = createInputDialog("", "");
-        JTextField persianField = (JTextField) inputPanel.getComponent(1);
-        JTextField urduField = (JTextField) inputPanel.getComponent(3);
+        String persian = "";
+        String urdu = "";
 
-        int result = JOptionPane.showConfirmDialog(
-                this, inputPanel,
-                "نیا لغت اندراج — New Glossary Entry",
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE
-        );
+        // Loop until valid or cancelled (BR-07 / issue #9)
+        while (true) {
+            GlossaryEntryDialog dialog = new GlossaryEntryDialog(persian, urdu);
 
-        if (result == JOptionPane.OK_OPTION) {
+            int result = JOptionPane.showConfirmDialog(
+                    this, dialog,
+                    "نیا لغت اندراج — New Glossary Entry",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
+            if (result != JOptionPane.OK_OPTION) {
+                return; // User cancelled
+            }
+
+            persian = dialog.getPersianWord();
+            urdu = dialog.getUrduMeaning();
+
             try {
-                glossaryService.addEntry(
-                        currentChapterId,
-                        persianField.getText(),
-                        urduField.getText()
-                );
+                glossaryService.addEntry(currentChapterId, persian, urdu);
                 loadGlossaryEntries();
                 setStatus("اندراج کامیابی سے شامل ہو گیا۔ — Entry added successfully.");
+                return;
             } catch (IllegalArgumentException ex) {
                 showError(ex.getMessage());
-            } catch (SQLException ex) {
-                showError("محفوظ کرنے میں خرابی: " + ex.getMessage());
+                // Loop continues — dialog re-opens with entered values
+            } catch (GlossaryException ex) {
+                showError("محفوظ کرنے میں خرابی۔\n(Error saving entry.)");
+                return;
             }
         }
     }
@@ -225,6 +234,7 @@ public class GlossaryPanel extends JPanel {
     /**
      * Handles the Edit button click (FR-GL-04).
      * Populates the dialog with the selected entry's values.
+     * BR-07/BR-09: re-opens the dialog with entered values when validation fails.
      */
     private void handleEdit() {
         int selectedRow = glossaryTable.getSelectedRow();
@@ -234,36 +244,41 @@ public class GlossaryPanel extends JPanel {
         }
 
         String entryId = (String) tableModel.getValueAt(selectedRow, 0);
-        String currentPersian = (String) tableModel.getValueAt(selectedRow, 1);
-        String currentUrdu = (String) tableModel.getValueAt(selectedRow, 2);
+        String persian = (String) tableModel.getValueAt(selectedRow, 1);
+        String urdu    = (String) tableModel.getValueAt(selectedRow, 2);
 
-        JPanel inputPanel = createInputDialog(currentPersian, currentUrdu);
-        JTextField persianField = (JTextField) inputPanel.getComponent(1);
-        JTextField urduField = (JTextField) inputPanel.getComponent(3);
+        // Loop until valid or cancelled (BR-07 / issue #9)
+        while (true) {
+            GlossaryEntryDialog dialog = new GlossaryEntryDialog(persian, urdu);
 
-        int result = JOptionPane.showConfirmDialog(
-                this, inputPanel,
-                "لغت اندراج میں ترمیم — Edit Glossary Entry",
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE
-        );
+            int result = JOptionPane.showConfirmDialog(
+                    this, dialog,
+                    "لغت اندراج میں ترمیم — Edit Glossary Entry",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
 
-        if (result == JOptionPane.OK_OPTION) {
+            if (result != JOptionPane.OK_OPTION) {
+                return; // User cancelled
+            }
+
+            persian = dialog.getPersianWord();
+            urdu = dialog.getUrduMeaning();
+
             try {
                 GlossaryEntry entry = new GlossaryEntry(
-                        entryId,
-                        currentChapterId,
-                        persianField.getText(),
-                        urduField.getText()
-                );
+                        entryId, currentChapterId, persian, urdu);
                 glossaryService.updateEntry(entry);
                 loadGlossaryEntries();
                 setStatus("اندراج کامیابی سے اپ ڈیٹ ہو گیا۔ — Entry updated successfully.");
+                return;
             } catch (IllegalArgumentException ex) {
                 // BR-06: failed validation does not replace saved data
                 showError(ex.getMessage());
-            } catch (SQLException ex) {
-                showError("اپ ڈیٹ کرنے میں خرابی: " + ex.getMessage());
+                // Loop continues — dialog re-opens with entered values
+            } catch (GlossaryException ex) {
+                showError("اپ ڈیٹ کرنے میں خرابی۔\n(Error updating entry.)");
+                return;
             }
         }
     }
@@ -281,7 +296,7 @@ public class GlossaryPanel extends JPanel {
 
         String entryId = (String) tableModel.getValueAt(selectedRow, 0);
         String persian = (String) tableModel.getValueAt(selectedRow, 1);
-        String urdu = (String) tableModel.getValueAt(selectedRow, 2);
+        String urdu    = (String) tableModel.getValueAt(selectedRow, 2);
 
         // BR-04: Confirmation before deletion
         int confirm = JOptionPane.showConfirmDialog(
@@ -300,41 +315,14 @@ public class GlossaryPanel extends JPanel {
                 glossaryService.deleteEntry(entryId);
                 loadGlossaryEntries();
                 setStatus("اندراج کامیابی سے حذف ہو گیا۔ — Entry deleted successfully.");
-            } catch (SQLException ex) {
-                showError("حذف کرنے میں خرابی: " + ex.getMessage());
+            } catch (GlossaryException ex) {
+                showError("حذف کرنے میں خرابی۔\n(Error deleting entry.)");
             }
         }
         // If NO is selected, do nothing — entry remains unchanged
     }
 
     // ── UI Helpers ───────────────────────────────────────────
-
-    /**
-     * Creates an input dialog panel with two RTL text fields
-     * for Persian word and Urdu meaning.
-     */
-    private JPanel createInputDialog(String persianValue, String urduValue) {
-        JPanel panel = new JPanel(new GridLayout(4, 1, 5, 5));
-
-        JLabel persianLabel = new JLabel("فارسی لفظ (Persian Word):");
-        persianLabel.setFont(UI_FONT);
-        JTextField persianField = new JTextField(persianValue, 25);
-        persianField.setFont(RTL_FONT);
-        persianField.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-
-        JLabel urduLabel = new JLabel("اردو معنی (Urdu Meaning):");
-        urduLabel.setFont(UI_FONT);
-        JTextField urduField = new JTextField(urduValue, 25);
-        urduField.setFont(RTL_FONT);
-        urduField.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-
-        panel.add(persianLabel);
-        panel.add(persianField);
-        panel.add(urduLabel);
-        panel.add(urduField);
-
-        return panel;
-    }
 
     /**
      * Shows an error message dialog (NFR-US-06).
@@ -352,5 +340,46 @@ public class GlossaryPanel extends JPanel {
      */
     private void setStatus(String message) {
         statusLabel.setText(message);
+    }
+
+    // ── Inner Dialog Class (issue #10) ──────────────────────
+
+    /**
+     * A small dialog panel with named fields for Persian word and Urdu meaning.
+     * Replaces the fragile {@code getComponent()} approach.
+     */
+    private static class GlossaryEntryDialog extends JPanel {
+
+        private final JTextField persianField;
+        private final JTextField urduField;
+
+        GlossaryEntryDialog(String persianValue, String urduValue) {
+            super(new GridLayout(4, 1, 5, 5));
+
+            JLabel persianLabel = new JLabel("فارسی لفظ (Persian Word):");
+            persianLabel.setFont(UI_FONT);
+            persianField = new JTextField(persianValue, 25);
+            persianField.setFont(RTL_FONT);
+            persianField.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+
+            JLabel urduLabel = new JLabel("اردو معنی (Urdu Meaning):");
+            urduLabel.setFont(UI_FONT);
+            urduField = new JTextField(urduValue, 25);
+            urduField.setFont(RTL_FONT);
+            urduField.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+
+            add(persianLabel);
+            add(persianField);
+            add(urduLabel);
+            add(urduField);
+        }
+
+        String getPersianWord() {
+            return persianField.getText();
+        }
+
+        String getUrduMeaning() {
+            return urduField.getText();
+        }
     }
 }
