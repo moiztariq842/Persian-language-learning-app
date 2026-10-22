@@ -8,11 +8,13 @@ bin/
 *.db-journal
 persian_app.db
 
-# IDE & Editor settings
+# IDE & Editor settings (keep Eclipse .project, .classpath, .settings)
 .idea/
 *.iml
 .vscode/
-.eclipse/
-.settings/
 .DS_Store
 Thumbs.db
+
+# Temp files
+sources.txt
+test_sources.txt

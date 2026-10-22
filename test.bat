@@ -24,4 +24,4 @@ if %TEST_COMPILE_STATUS% NEQ 0 (
 )
 
 echo Running JUnit 5 tests...
-java -jar lib\junit-platform-console-standalone-1.10.2.jar --class-path "bin;lib\sqlite-jdbc-3.45.2.0.jar" --scan-class-path
+java -Dfile.encoding=UTF-8 -jar lib\junit-platform-console-standalone-1.10.2.jar --class-path "bin;lib\mariadb-java-client-3.3.3.jar" --scan-class-path
